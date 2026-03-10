@@ -7,7 +7,14 @@
   programs.zsh = {
     enable = true;
     enableCompletion = true;
-    shellAliases = { "cd" = "z"; };
+    shellAliases = { 
+      "cd" = "z"; 
+      "ls" = "eza --icons --group-directories-first";
+      "cat" = "bat";
+      "top" = "btm";
+      "lgit" = "lazygit";
+      "curl" = "curlie";
+    };
   };
   programs.zoxide.enable = true;
   programs.fzf.enable = true;
