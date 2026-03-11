@@ -145,20 +145,4 @@
       };
     };
   };
-
-  programs.tmux = {
-    enable = true;
-    shortcut = "a";
-    baseIndex = 0; 
-    mouse = true; 
-    extraConfig = ''
-      bind | split-window -h
-      bind - split-window -v
-
-      unbind '"'
-      unbind %
-
-      bind r source-file ~/.tmux.conf \; display "Reloaded!"
-    '';
-  };
 }
