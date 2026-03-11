@@ -10,7 +10,7 @@
   home.stateVersion = "24.11";
 
   programs.zsh.shellAliases = {
-    hm = "home-manager switch --flake ~/03-TechEd/01-homelab/rubie-homelab/config#aditya@hogwarts";
+    hm = "home-manager switch --flake ~/03-TechEd/01-homelab/ministry/config#aditya@hogwarts";
   };
 
   # GPG configuration
