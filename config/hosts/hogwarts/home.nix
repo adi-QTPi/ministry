@@ -3,6 +3,7 @@
     ../../modules/shell.nix 
     ../../modules/dev.nix 
     ../../modules/desktop.nix 
+    ../../modules/security.nix 
   ];
 
   home.username = "aditya";

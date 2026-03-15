@@ -1,18 +1,17 @@
 { pkgs, ... }: {
   home.packages = with pkgs; [
     git
-    lazygit   # TUI for git (makes staging/rebasing 10x faster)
     go
+    air
+    nodejs
     docker
     docker-compose
     opencode
     nil
-    neofetch
-    eza                  # Modern 'ls' (matches your Starship/Alacritty vibe)
-    ripgrep              # Blazing fast 'grep' replacement
-    bat                  # 'cat' with syntax highlighting
-    bottom               # A much cooler, graphical 'top' (process monitor)
-    curlie               # curl but with a much better UI (like HTTPie)
-    jq
+  ];
+
+  home.sessionPath = [
+    "$HOME/.npm-global/bin"
+    "$HOME/go/bin"
   ];
 }
