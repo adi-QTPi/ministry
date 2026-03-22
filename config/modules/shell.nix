@@ -4,7 +4,7 @@ let
   myTerminalTools = with pkgs; [
     watch
     eza
-    bottom
+    btop
     lazygit
     curlie
     fzf
@@ -38,7 +38,7 @@ in
     shellAliases = { 
       "cd" = "z"; 
       "ls" = "eza --icons --group-directories-first";
-      "top" = "btm";
+      "top" = "btop";
       "lgit" = "lazygit";
       "curl" = "curlie";
     };
