@@ -87,7 +87,7 @@ in
     enable = true;
     settings = {
       add_newline = true;
-      format = "[╭─ ](dimmed white)$os$directory$git_branch$git_status$fill$username$hostname$cmd_duration$time$line_break[╰─](dimmed white)$character";
+      format = "[╭─ ](dimmed white)$os$username$hostname$directory$git_branch$git_status$fill$cmd_duration$time$line_break[│](dimmed white)\n[╰─](dimmed white)$character";
       right_format = "\${custom.charging_status}$battery"; 
 
       custom.charging_status = {
@@ -110,7 +110,7 @@ in
       os = {
         disabled = false;
         format = "[$symbol ]($style)";
-        style = "bold blue";
+        style = "bold #268bd2";
         symbols = {
           Macos = ""; 
           Ubuntu = "";
@@ -120,11 +120,11 @@ in
       git_branch = {
         format = "[ $symbol$branch ]($style)";
         symbol = ""; 
-        style = "bold purple";
+        style = "bold #6c71c4";
       };
       git_status = {
         format = "[$all_status$ahead_behind]($style) ";
-        style = "bold red";
+        style = "bold #dc322f";
         conflicted = "~";
         up_to_date = "";
         untracked = "?";   
@@ -135,39 +135,40 @@ in
         deleted = "x";     
       };
       directory = {
-        format = "[󰋜 $path]($style) ";
-        style = "bold blue";
+        format = "[󰉋 $path]($style) ";
+        style = "bold #2aa198";
         truncation_length = 3;
         truncate_to_repo = false;
       };
       username = {
         show_always = true;
-        format = "[$user]($style)";
-        style_user = "bold yellow";
+        format = "[ $user]($style)";
+        style_user = "bold #2aa198";
       };
       hostname = {
         ssh_only = false;
-        format = "[@$hostname]($style) ";
-        style = "bold yellow";
+        format = "[@$hostname ]($style) ";
+        style = "bold #b28d1e";
       };
       cmd_duration = {
-        format = "[󱦟$duration]($style) ";
-        style = "dimmed cyan";
+        format = "[⏳ $duration]($style) ";
+        style = "dimmed #586e75";
       };
       time = {
         disabled = false;
-        format = "[󱑎 $time]($style)";
+        format = "[🦉 $time]($style)";
         time_format = "%H:%M:%S";
-        style = "dimmed cyan";
+        style = "bold #586e75";
       };
       character = {
-        success_symbol = "[❯](bold green)";
-        error_symbol = "[❯](bold red)";
+        success_symbol = " [ϟ](bold #859900)";
+        error_symbol = " [ϟ](bold #dc322f)";
       };
       battery = {
         disabled = false;
         format = "[$symbol$percentage]($style)";
         display = [
+          { threshold = 20; style = "bold red"; }
           { threshold = 100; style = "bold green"; }
         ];
       };
