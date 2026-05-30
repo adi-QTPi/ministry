@@ -62,24 +62,27 @@ in
       vim-colors-solarized
     ];
 
-    extraConfig = ''
-      syntax enable
-      set background=dark
-      colorscheme solarized
-      
-      set number
-      set relativenumber
-      set tabstop=2
-      set shiftwidth=2
-      set expandtab
-      set termguicolors
+    initLua = ''
+      -- 1. Core Keymaps (Leader must be set first)
+      vim.g.mapleader = " "
+      vim.keymap.set('i', 'jk', '<Esc>', { noremap = true, silent = true })
 
-      lua << EOF
-        vim.g.mapleader = " "
-        require("which-key").setup {
-          delay = 500,
-        }
-      EOF
+      -- 2. Aesthetics & UI
+      vim.o.background = "dark"
+      vim.cmd("colorscheme solarized")
+      vim.opt.termguicolors = true
+      vim.opt.number = true
+      vim.opt.relativenumber = true
+
+      -- 3. Indentation
+      vim.opt.tabstop = 4
+      vim.opt.shiftwidth = 4
+      vim.opt.expandtab = true
+
+      -- 4. Plugin Initialization
+      require("which-key").setup {
+        delay = 500,
+      }
     '';
   };
   
