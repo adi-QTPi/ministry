@@ -33,4 +33,4 @@ fi
 # Using tee here so it handles sudo gracefully if run manually
 echo "$NEW_BRIGHT" | sudo tee "$BACKLIGHT_DIR/brightness" > /dev/null
 
-echo "Brightness set to $NEW_BRIGHT/$MAX_BRIGHT"
+echo "Brightness set to $NEW_BRIGHT/$MAX_BRIGHT."

@@ -4,8 +4,6 @@
     go
     air
     nodejs
-    docker
-    docker-compose
     opencode
     nil
     rustup
