@@ -31,6 +31,17 @@ in
     enable = true;
     enableZshIntegration = true;
   };
+  
+  programs.direnv = {
+    enable = true;
+    enableZshIntegration = true; 
+    nix-direnv.enable = true;   
+  };
+  
+  programs.fzf = {
+    enable = true;
+    enableZshIntegration = true; 
+  };
 
   programs.zsh = {
     enable = true;
@@ -41,6 +52,7 @@ in
       "top" = "btop";
       "lgit" = "lazygit";
       "curl" = "curlie";
+      "tf" = "terraform";
     };
   };
   
