@@ -13,5 +13,7 @@
     "$HOME/.npm-global/bin"
     "$HOME/go/bin"
     "$HOME/.cargo/bin"
+    "/Applications/Antigravity.app/Contents/Resources/app/bin"
+    "/Applications/Antigravity\ IDE.app/Contents/Resources/app/bin"
   ];
 }

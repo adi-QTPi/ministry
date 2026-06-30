@@ -53,6 +53,7 @@ in
       "lgit" = "lazygit";
       "curl" = "curlie";
       "tf" = "terraform";
+      "agi" = "antigravity-ide";
     };
   };
   
