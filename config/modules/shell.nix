@@ -18,12 +18,12 @@ in
     enable = true;
     settings = {
       colorscheme = "solarized-dark";
-      autoclose = true;      # Enables IDE-style bracket and quote completion
-      syntax = true;         # Enables syntax highlighting
+      autoclose = true;
+      syntax = true;
       tabsize = 4;
       tabstospaces = true;
       softwrap = true;
-      ruler = true;          # Shows line and column numbers at the bottom
+      ruler = true;
     };
   };
 
@@ -45,6 +45,7 @@ in
 
   programs.zsh = {
     enable = true;
+    defaultKeymap = "viins";
     enableCompletion = true;
     shellAliases = { 
       "cd" = "z"; 
@@ -55,17 +56,25 @@ in
       "tf" = "terraform";
       "agi" = "antigravity-ide";
     };
+    initContent = ''
+      bindkey -M viins 'jk' vi-cmd-mode
+      KEYTIMEOUT=15
+
+      autoload -Uz edit-command-line
+      zle -N edit-command-line
+      bindkey -M vicmd 'v' edit-command-line
+    '';
   };
   
   home.sessionVariables = {
     LANG = "C.UTF-8";
     LC_ALL = "C.UTF-8";
-    EDITOR = "emacs";
+    EDITOR = "nvim";
   };
 
   programs.neovim = {
     enable = true;
-    defaultEditor = false;
+    defaultEditor = true;
     viAlias = true;
     vimAlias = true;
     
@@ -76,23 +85,19 @@ in
     ];
 
     initLua = ''
-      -- 1. Core Keymaps (Leader must be set first)
       vim.g.mapleader = " "
       vim.keymap.set('i', 'jk', '<Esc>', { noremap = true, silent = true })
 
-      -- 2. Aesthetics & UI
       vim.o.background = "dark"
       vim.cmd("colorscheme solarized")
       vim.opt.termguicolors = true
       vim.opt.number = true
       vim.opt.relativenumber = true
 
-      -- 3. Indentation
       vim.opt.tabstop = 4
       vim.opt.shiftwidth = 4
       vim.opt.expandtab = true
 
-      -- 4. Plugin Initialization
       require("which-key").setup {
         delay = 500,
       }

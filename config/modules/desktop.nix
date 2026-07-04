@@ -1,6 +1,5 @@
 { pkgs, ... }: {
   home.packages = with pkgs; [
-    colima
     rectangle
     fontconfig
     nerd-fonts.comic-shanns-mono
