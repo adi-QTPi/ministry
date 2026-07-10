@@ -1,0 +1,10 @@
+---
+- name: Ensure reverse proxy on the edge server
+  hosts: public
+  roles:
+    - role: maxhoesel.caddy.caddy_server
+      become: true
+      vars:
+        caddy_apply_config: true
+        caddy_config_mode: Caddyfile
+        caddy_caddyfile: "{{ lookup('template', '../templates/caddy/Caddyfile.j2') }}"

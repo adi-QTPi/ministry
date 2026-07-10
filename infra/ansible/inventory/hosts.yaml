@@ -3,8 +3,8 @@ all:
     # the ONE server handling all the incoming requests, with the sole job of proxying, load balancing etc.
     public:
       hosts:
-        azure-edge:
-          ansible_host: "{{ azure_edge_ansible_host }}"
+        azure_edge:
+          ansible_host: "{{ azure_edge_host }}"
 
     # internal servers reachable through tailscale interface.
     internal:

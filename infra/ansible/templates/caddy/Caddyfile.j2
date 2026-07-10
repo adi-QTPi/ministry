@@ -1,0 +1,21 @@
+{% for service in caddy_proxy_services %}
+{% if service.subdomain is defined and service.subdomain %}
+{{ service.subdomain }}.{{ base_domain }} {
+{% else %}
+{{ base_domain }} {
+{% endif %}
+
+    {% if service.extra_options is defined and service.extra_options %}
+    reverse_proxy {{ service.host }}:{{ service.port }} {
+        
+        {% for option in service.extra_options | dict2items %}
+        {{ option.key }} {{ option.value }}
+        {% endfor %}
+    }
+    {% else %}
+    
+    reverse_proxy {{ service.host }}:{{ service.port }}
+    {% endif %}
+
+} 
+{% endfor %}

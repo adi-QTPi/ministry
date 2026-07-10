@@ -1,2 +1,8 @@
 pub_ssh_key_ansible: "{{ vault_pub_ssh_key_ansible }}"
 ssh_key_ansible: "{{ vault_ssh_key_ansible }}"
+
+base_domain: karma.run.place
+
+bella_host: 100.96.156.117
+rubie_host: 100.107.240.67
+teddy_host: 100.80.19.125

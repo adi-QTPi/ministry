@@ -9,9 +9,21 @@ ping target="all" user="ansible":
     ansible {{target}} -i ./inventory/hosts.yaml -m ping -u {{user}}
 
 # Bootstrap a node. Pass '-K' to prompt for sudo password if needed.
-bootstrap user *flags:
+bootstrap user="ansible" *flags:
     ansible-playbook ./playbooks/bootstrap.yaml -u {{user}} {{flags}}
 
-# Vault actions: view, edit, create, ...
+# Vault actions like view, edit, create etc.
 vault action="edit" location="./inventory/group_vars/all/vault.yaml":
     ansible-vault {{action}} {{location}}
+
+# perform actions related to roles, create, list etc.
+role action="info" role="":
+	ansible-galaxy role {{action}} roles/{{role}}
+	
+# install all the required collections and roles
+install *flags:
+	ansible-galaxy install -r requirements.yaml {{flags}}
+
+# run a playbook (name without extension) in the playbooks folder, eg: just play site
+play playbook="site" *flags:
+	ansible-playbook ./playbooks/{{playbook}}.yaml {{flags}}
