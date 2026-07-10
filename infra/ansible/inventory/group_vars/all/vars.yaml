@@ -1,6 +1,8 @@
 pub_ssh_key_ansible: "{{ vault_pub_ssh_key_ansible }}"
 ssh_key_ansible: "{{ vault_ssh_key_ansible }}"
 
+tailscale_oauth_key: "{{ vault_tailscale_oauth_key }}"
+
 base_domain: karma.run.place
 
 bella_host: 100.96.156.117

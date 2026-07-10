@@ -2,6 +2,16 @@
 - name: Ensure reverse proxy on the edge server
   hosts: public
   roles:
+    - role: artis3n.tailscale.machine
+      vars:
+        state: latest
+        verbose: true
+        tailscale_authkey: "{{ tailscale_oauth_key }}"
+        tailscale_tags:
+          - "server"
+        tailscale_oauth_ephemeral: false
+        tailscale_oauth_preauthorized: true
+
     - role: maxhoesel.caddy.caddy_server
       become: true
       vars:
