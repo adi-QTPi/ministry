@@ -1,0 +1,28 @@
+---
+# serves the purpose of what an ideal cloud-init script should do.
+# this playbook is supposed to be run to prime the servers for further playbooks, which assume that there exists a user named ansible with certain previliges.
+# ansible-playbook ./playbooks/bootstrap.yaml -u ubuntu -K # this command assumes that every server can be sshed on the user "ubuntu"
+- name: Setup ansible user with the appropriate ssh key and passwordless sudo.
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Create user
+      ansible.builtin.user:
+        name: ansible
+        groups:
+          - sudo
+        append: true
+        shell: /bin/bash
+
+    - name: Authorized ssh key
+      ansible.posix.authorized_key:
+        user: ansible
+        key: "{{ pub_ssh_key_ansible }}"
+
+    - name: Passwordless sudo
+      ansible.builtin.copy:
+        dest: /etc/sudoers.d/ansible
+        content: "ansible ALL=(ALL) NOPASSWD: ALL\n"
+        mode: "0440" # readonly
+        validate: /usr/sbin/visudo -cf %s

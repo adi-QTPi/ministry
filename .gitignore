@@ -13,3 +13,5 @@ crash.*.log
 !*.example.tfvars
 *.tfvars.json
 *.auto.tfvars
+
+.vault_pass

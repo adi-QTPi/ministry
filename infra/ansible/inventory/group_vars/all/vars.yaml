@@ -1,0 +1,2 @@
+pub_ssh_key_ansible: "{{ vault_pub_ssh_key_ansible }}"
+ssh_key_ansible: "{{ vault_ssh_key_ansible }}"

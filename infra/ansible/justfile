@@ -1,0 +1,17 @@
+# vim: ft=make
+
+set ignore-comments := true
+
+default:
+    @just --list
+
+ping target="all" user="ansible":
+    ansible {{target}} -i ./inventory/hosts.yaml -m ping -u {{user}}
+
+# Bootstrap a node. Pass '-K' to prompt for sudo password if needed.
+bootstrap user *flags:
+    ansible-playbook ./playbooks/bootstrap.yaml -u {{user}} {{flags}}
+
+# Vault actions: view, edit, create, ...
+vault action="edit" location="./inventory/group_vars/all/vault.yaml":
+    ansible-vault {{action}} {{location}}
