@@ -3,7 +3,7 @@ ssh_key_ansible: "{{ vault_ssh_key_ansible }}"
 
 tailscale_oauth_key: "{{ vault_tailscale_oauth_key }}"
 
-base_domain: karma.run.place
+base_domain: "{{ vault_base_domain }}"
 
 bella_host: 100.96.156.117
 rubie_host: 100.107.240.67

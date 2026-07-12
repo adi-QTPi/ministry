@@ -1,0 +1,48 @@
+# SPDX-License-Identifier: MIT-0
+---
+# tasks file for roles/fetch_terraform_state
+
+- name: Download the remote state JSON directly from Azure Blob
+  azure.azcollection.azure_rm_storageblob:
+    resource_group: "{{ fetch_terraform_state_azure_resource_group }}"
+    storage_account_name: "{{ fetch_terraform_state_azure_storage_account }}"
+    container: "{{ fetch_terraform_state_azure_container }}"
+    blob: "{{ fetch_terraform_state_azure_blob_name }}"
+    dest: "{{ fetch_terraform_state_local_temp_path }}"
+
+- name: Read the state file into Ansible's memory
+  ansible.builtin.slurp:
+    src: "{{ fetch_terraform_state_local_temp_path }}"
+  register: fetch_terraform_state_raw_state
+
+- name: Try to read vault password from environment (CI/CD Pipeline)
+  ansible.builtin.set_fact:
+    fetch_terraform_state_vault_pass: "{{ lookup('ansible.builtin.env', fetch_terraform_state_vault_pass_name) }}"
+  no_log: true
+
+- name: Fallback to local file if environment variable is empty (Local Dev)
+  ansible.builtin.set_fact:
+    fetch_terraform_state_vault_pass: "{{ lookup('ansible.builtin.file', fetch_terraform_state_vault_pass_path) | trim }}"
+  when: fetch_terraform_state_vault_pass == ""
+  no_log: true
+
+- name: Encrypt and append multiple secrets natively
+  ansible.builtin.blockinfile:
+    path: "{{ fetch_terraform_state_vault_output_path }}"
+    create: true
+    mode: "0600"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK - {{ item.vault_name }}"
+    block: |
+      {{ item.vault_name }}: !vault |
+      {{
+        (fetch_terraform_state_raw_state['content'] | b64decode | from_json).outputs[item.tf_key].value
+        | ansible.builtin.vault(fetch_terraform_state_vault_pass)
+        | indent(2, true)
+      }}
+  loop: "{{ fetch_terraform_state_secrets }}"
+  no_log: true
+
+- name: Clean up the plaintext state file
+  ansible.builtin.file:
+    path: "{{ fetch_terraform_state_local_temp_path }}"
+    state: absent

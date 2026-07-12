@@ -10,8 +10,8 @@ all:
     internal:
       hosts:
         bella:
-          ansible_host: 100.96.156.117
+          ansible_host: "{{ bella_host }}"
         rubie:
-          ansible_host: 100.107.240.67
+          ansible_host: "{{ rubie_host }}" 
         teddy:
-          ansible_host: 100.80.19.125
+          ansible_host: "{{ teddy_host }}" 

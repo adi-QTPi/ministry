@@ -1,4 +1,45 @@
 ---
+- name: Prepare temporary SSH key file
+  hosts: localhost
+  gather_facts: false
+  become: false
+  tasks:
+    - name: Create a secure temporary file
+      ansible.builtin.tempfile:
+        state: file
+        suffix: .key
+      register: temp_ssh_key
+
+    - name: Write decrypted key to temporary file
+      ansible.builtin.copy:
+        content: "{{ ssh_key_ansible }}"
+        dest: "{{ temp_ssh_key.path }}"
+        mode: "0600"
+      no_log: true
+
+    - name: Set the path as a host variable for all hosts
+      ansible.builtin.set_fact:
+        ansible_ssh_private_key_file: "{{ temp_ssh_key.path }}"
+        cacheable: true
+
+- name: Fetch variables from terraform state remote backend
+  hosts: localhost
+  gather_facts: false
+  become: false
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  roles:
+    - role: fetch_terraform_state
+      vars:
+        fetch_terraform_state_azure_resource_group: "rg-tfstate"
+        fetch_terraform_state_azure_storage_account: "karmastore"
+        fetch_terraform_state_azure_container: "staging"
+        fetch_terraform_state_azure_blob_name: "staging.terraform.tfstate"
+
+        fetch_terraform_state_secrets:
+          - tf_key: "public_ip"
+            vault_name: "vault_azure_edge_host"
+
 - name: Ensure reverse proxy on the edge server
   hosts: public
   roles:
@@ -9,8 +50,9 @@
         tailscale_authkey: "{{ tailscale_oauth_key }}"
         tailscale_tags:
           - "server"
-        tailscale_oauth_ephemeral: false
+        tailscale_oauth_ephemeral: true
         tailscale_oauth_preauthorized: true
+        tailscale_args: "--hostname=ingress"
 
     - role: maxhoesel.caddy.caddy_server
       become: true
@@ -18,3 +60,14 @@
         caddy_apply_config: true
         caddy_config_mode: Caddyfile
         caddy_caddyfile: "{{ lookup('template', '../templates/caddy/Caddyfile.j2') }}"
+
+- name: Cleanup temporary SSH key file
+  hosts: localhost
+  gather_facts: false
+  become: false
+  tasks:
+    - name: Remove the temp key
+      ansible.builtin.file:
+        path: "{{ hostvars['localhost']['ansible_ssh_private_key_file'] }}"
+        state: absent
+      when: hostvars['localhost']['ansible_ssh_private_key_file'] is defined
