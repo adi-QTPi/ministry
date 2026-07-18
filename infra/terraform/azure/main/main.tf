@@ -1,5 +1,5 @@
 module "base_network" {
-  source = "../../modules/network"
+  source = "../modules/network"
 
   environment_name  = var.environment_name
   deployment_region = var.deployment_region
@@ -9,7 +9,7 @@ module "base_network" {
 }
 
 module "base_compute" {
-  source = "../../modules/compute"
+  source = "../modules/compute"
 
   environment_name      = var.environment_name
   deployment_region     = var.deployment_region

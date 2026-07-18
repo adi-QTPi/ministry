@@ -1,0 +1,13 @@
+---
+# just install
+
+collections:
+  - name: ansible.posix
+  - name: maxhoesel.caddy
+    version: 6.0.0
+  - name: artis3n.tailscale
+    version: 1.2.1
+  - name: azure.azcollection
+    version: 3.19.0
+  - name: ansible.posix
+    version: 2.2.2
