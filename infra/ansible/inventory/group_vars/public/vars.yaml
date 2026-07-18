@@ -1,0 +1,31 @@
+azure_edge_host: "{{ vault_azure_edge_host }}"
+
+caddy_proxy_services:
+  - port: 7890
+    host: "{{ rubie_host }}"
+
+  - subdomain: goblin
+    port: 8334
+    host: "{{ rubie_host }}"
+
+  - subdomain: gringotts
+    port: 9876
+    host: "{{ rubie_host }}"
+
+  - subdomain: pensieve
+    port: 2283
+    host: "{{ rubie_host }}"
+
+  - subdomain: stocky
+    port: 3001
+    host: "{{ rubie_host }}"
+
+  - subdomain: moody
+    port: 8096
+    host: "{{ rubie_host }}"
+    extra_options:
+      flush_interval: "-1"
+
+  - subdomain: paste
+    port: 8088
+    host: "{{ rubie_host }}"

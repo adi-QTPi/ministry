@@ -1,0 +1,32 @@
+# vim: ft=make
+
+set ignore-comments := true
+set shell := ["bash", "-c"]
+with-env := "export $(sops -d env.enc.yaml | yq -r 'to_entries | .[] | .key + \"=\" + .value') &&"
+
+default:
+    @just --list
+
+switch_workspace env:
+    @{{with-env}} terraform workspace select {{env}} 2>/dev/null || terraform workspace new {{env}}
+
+init :
+	@{{with-env}} terraform init 
+
+plan env="staging": init 
+	@just decrypt {{env}}
+	@just switch_workspace {{env}}
+	@{{with-env}} terraform plan -out=tfplan-{{env}} -var-file={{env}}.tfvars.json
+
+apply env *flags: init 
+	@just switch_workspace {{env}}
+	@{{with-env}} terraform apply {{flags}} tfplan-{{env}}
+	
+update-env:
+	@sops -e env.yaml > env.enc.yaml
+
+encrypt env="staging":
+	@sops -e  {{env}}.tfvars.json > {{env}}.tfvars.enc.json
+
+decrypt env="staging":
+	@sops -d {{env}}.tfvars.enc.json > {{env}}.tfvars.json

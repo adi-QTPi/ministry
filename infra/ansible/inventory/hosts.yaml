@@ -1,0 +1,17 @@
+all:
+  children:
+    # the ONE server handling all the incoming requests, with the sole job of proxying, load balancing etc.
+    public:
+      hosts:
+        azure_edge:
+          ansible_host: "{{ azure_edge_host }}"
+
+    # internal servers reachable through tailscale interface.
+    internal:
+      hosts:
+        bella:
+          ansible_host: "{{ bella_host }}"
+        rubie:
+          ansible_host: "{{ rubie_host }}" 
+        teddy:
+          ansible_host: "{{ teddy_host }}" 
