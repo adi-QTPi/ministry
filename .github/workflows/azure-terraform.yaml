@@ -1,0 +1,78 @@
+name: azure-terraform
+
+on:
+  push:
+    branches: [prod, staging]
+    paths:
+      - "infra/terraform/azure/main/**"
+  pull_request:
+    branches: [prod, staging]
+    paths:
+      - "infra/terraform/azure/main/**"
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  set-env:
+    runs-on: ubuntu-latest
+    outputs:
+      env: ${{ steps.set-env.outputs.env }}
+    steps:
+      - id: set-env
+        run: |
+          TARGET="${{ github.base_ref || github.ref_name }}"
+          if [[ "$TARGET" == *"prod"* ]]; then
+            echo "env=prod" >> $GITHUB_OUTPUT
+          else
+            echo "env=staging" >> $GITHUB_OUTPUT
+          fi
+
+  tf-plan:
+    needs: [set-env]
+    runs-on: ubuntu-latest
+    environment: ${{ needs.set-env.outputs.env }}
+    defaults:
+      run:
+        working-directory: infra/terraform/azure/main
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Terraform Setup
+        uses: ./.github/actions/terraform-setup
+        with:
+          age-private-key: ${{ secrets.AGE_PRIVATE_KEY }}
+      - name: Terraform Plan
+        run: just plan ${{ needs.set-env.outputs.env }}
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ needs.set-env.outputs.env }}
+          path: infra/terraform/azure/main/tfplan
+
+  tf-apply:
+    needs: [set-env, tf-plan]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: ${{ needs.set-env.outputs.env }}
+    defaults:
+      run:
+        working-directory: infra/terraform/azure/main
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Plan Artifact
+        if: github.event_name != 'act'
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-${{ needs.set-env.outputs.env }}
+          path: infra/terraform/azure/main/
+      - name: Skip Download for Local
+        if: github.event_name == 'act'
+        run: echo "Local run detected - using existing tfplan file."
+      - name: Run Terraform Setup
+        uses: ./.github/actions/terraform-setup
+        with:
+          age-private-key: ${{ secrets.AGE_PRIVATE_KEY }}
+      - name: Terraform Apply
+        run: just apply ${{ needs.set-env.outputs.env }} -auto-approve

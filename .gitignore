@@ -1,13 +1,12 @@
 /.DS_Store
 .env
+env.yaml
+!env.enc.yaml
 
 **/.terraform/*
 
 *.tfstate
 *.tfstate.*
-
-crash.log
-crash.*.log
 
 *.tfvars
 !*.example.tfvars
@@ -15,3 +14,10 @@ crash.*.log
 *.auto.tfvars
 
 .vault_pass
+.secrets
+*.key
+tfplan
+*.lock.hcl
+!*.enc.tfvars.json
+
+tmp/

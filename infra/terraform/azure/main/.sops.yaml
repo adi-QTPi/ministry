@@ -1,0 +1,7 @@
+creation_rules:
+  - path_regex: .*\.tfvars.json$
+    age: age1ucax7qzy90d9fzr7vuspnpslve5tjtdscld37ckhentamwd4gyxq08dtsd
+    encrypted_regex: ".*"
+
+  - path_regex: env\.yaml$
+    age: age1ucax7qzy90d9fzr7vuspnpslve5tjtdscld37ckhentamwd4gyxq08dtsd

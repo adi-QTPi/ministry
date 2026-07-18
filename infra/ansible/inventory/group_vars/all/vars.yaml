@@ -1,6 +1,11 @@
 pub_ssh_key_ansible: "{{ vault_pub_ssh_key_ansible }}"
 ssh_key_ansible: "{{ vault_ssh_key_ansible }}"
 
+azure_client_id: "{{ vault_azure_client_id }}"
+azure_client_secret: "{{ vault_azure_client_secret }}"
+azure_tenant_id: "{{ vault_azure_tenant_id }}"
+azure_subscription_id: "{{ vault_azure_subscription_id }}"
+
 tailscale_oauth_key: "{{ vault_tailscale_oauth_key }}"
 
 base_domain: "{{ vault_base_domain }}"
@@ -8,3 +13,4 @@ base_domain: "{{ vault_base_domain }}"
 bella_host: 100.96.156.117
 rubie_host: 100.107.240.67
 teddy_host: 100.80.19.125
+raj_host: 100.98.110.23

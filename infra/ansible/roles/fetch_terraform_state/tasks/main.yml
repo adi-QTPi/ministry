@@ -2,8 +2,21 @@
 ---
 # tasks file for roles/fetch_terraform_state
 
+- name: Assert Azure credentials are provided
+  ansible.builtin.assert:
+    that:
+      - fetch_terraform_state_azure_client_id | length > 0
+      - fetch_terraform_state_azure_client_secret | length > 0
+      - fetch_terraform_state_azure_tenant_id | length > 0
+      - fetch_terraform_state_azure_subscription_id | length > 0
+    fail_msg: "Missing Azure credentials! Please provide ID, Secret, Tenant, and Subscription."
+
 - name: Download the remote state JSON directly from Azure Blob
   azure.azcollection.azure_rm_storageblob:
+    client_id: "{{ fetch_terraform_state_azure_client_id }}"
+    secret: "{{ fetch_terraform_state_azure_client_secret }}"
+    tenant: "{{ fetch_terraform_state_azure_tenant_id }}"
+    subscription_id: "{{ fetch_terraform_state_azure_subscription_id }}"
     resource_group: "{{ fetch_terraform_state_azure_resource_group }}"
     storage_account_name: "{{ fetch_terraform_state_azure_storage_account }}"
     container: "{{ fetch_terraform_state_azure_container }}"

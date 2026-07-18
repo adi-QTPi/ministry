@@ -31,10 +31,14 @@
   roles:
     - role: fetch_terraform_state
       vars:
+        fetch_terraform_state_azure_client_id: "{{ azure_client_id }}"
+        fetch_terraform_state_azure_client_secret: "{{ azure_client_secret }}"
+        fetch_terraform_state_azure_tenant_id: "{{ azure_tenant_id }}"
+        fetch_terraform_state_azure_subscription_id: "{{ azure_subscription_id }}"
         fetch_terraform_state_azure_resource_group: "rg-tfstate"
         fetch_terraform_state_azure_storage_account: "karmastore"
         fetch_terraform_state_azure_container: "staging"
-        fetch_terraform_state_azure_blob_name: "staging.terraform.tfstate"
+        fetch_terraform_state_azure_blob_name: "staging.terraform.tfstateenv:prod"
 
         fetch_terraform_state_secrets:
           - tf_key: "public_ip"
@@ -42,6 +46,19 @@
 
 - name: Ensure reverse proxy on the edge server
   hosts: public
+  become: true
+  pre_tasks:
+    - name: Enable IPv4 and IPv6 forwarding
+      ansible.posix.sysctl:
+        name: "{{ item.name }}"
+        value: "1"
+        sysctl_file: /etc/sysctl.d/99-forwarding.conf
+        sysctl_set: true
+        state: present
+        reload: true
+      loop:
+        - { name: "net.ipv4.ip_forward" }
+        - { name: "net.ipv6.conf.all.forwarding" }
   roles:
     - role: artis3n.tailscale.machine
       vars:
@@ -52,7 +69,7 @@
           - "server"
         tailscale_oauth_ephemeral: true
         tailscale_oauth_preauthorized: true
-        tailscale_args: "--hostname=ingress"
+        tailscale_args: "--hostname=ingress --advertise-exit-node"
 
     - role: maxhoesel.caddy.caddy_server
       become: true
