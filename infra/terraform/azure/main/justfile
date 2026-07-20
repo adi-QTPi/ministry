@@ -13,6 +13,14 @@ switch_workspace env:
 init :
 	@{{with-env}} terraform init 
 
+validate:
+    @{{with-env}} terraform init -backend=false
+    @terraform fmt -check -recursive -list=true -diff
+    @terraform validate
+
+fmt:
+	@terraform fmt -recursive -list=true -diff
+
 plan env="staging": init 
 	@just decrypt {{env}}
 	@just switch_workspace {{env}}
