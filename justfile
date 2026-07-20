@@ -1,7 +1,7 @@
 # simulate the actions using act.
 
 default:
-    @just --lis
+    @just --list
 
 pr env="staging":
     @echo "Running simulation for environment: {{env}}"
