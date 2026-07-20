@@ -10,6 +10,12 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Setup Official Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ inputs.terraform_version }}
+        terraform_wrapper: true
+
     - name: Detect Architecture and Install Tools
       shell: bash
       run: |
@@ -45,12 +51,3 @@ runs:
     - name: Install Azure CLI
       shell: bash
       run: curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-
-    - name: Install Terraform
-      shell: bash
-      run: |
-        VERSION="${{ inputs.terraform_version }}"
-        curl -LO "https://releases.hashicorp.com/terraform/${VERSION}/terraform_${VERSION}_linux_${{ env.ARCH }}.zip"
-        unzip terraform_${VERSION}_linux_${{ env.ARCH }}.zip
-        sudo mv terraform /usr/local/bin/
-        rm terraform_${VERSION}_linux_${{ env.ARCH }}.zip

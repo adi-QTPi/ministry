@@ -8,15 +8,14 @@ default:
     @just --list
 
 switch_workspace env:
-    @{{with-env}} terraform workspace select {{env}} 2>/dev/null || terraform workspace new {{env}}
+    @if [ -z "$TF_WORKSPACE" ]; then {{with-env}} terraform workspace select {{env}} -no-color 2>/dev/null || terraform workspace new {{env}} -no-color; else echo "TF_WORKSPACE is set to $TF_WORKSPACE, skipping workspace switch"; fi
 
 init :
-	@{{with-env}} terraform init 
+    @{{with-env}} TF_LOG=ERROR terraform init -no-color > /dev/null && echo "Terraform init was successfull"
 
-validate:
-    @{{with-env}} terraform init -backend=false
+validate: init
     @terraform fmt -check -recursive -list=true -diff
-    @terraform validate
+    @terraform validate -no-color
 
 fmt:
 	@terraform fmt -recursive -list=true -diff
@@ -24,7 +23,7 @@ fmt:
 plan env="staging": init 
 	@just decrypt {{env}}
 	@just switch_workspace {{env}}
-	@{{with-env}} terraform plan -out=tfplan-{{env}} -var-file={{env}}.tfvars.json
+	@{{with-env}} terraform plan -out=tfplan-{{env}} -var-file={{env}}.tfvars.json -no-color
 
 apply env *flags: init 
 	@just switch_workspace {{env}}
@@ -38,3 +37,9 @@ encrypt env="staging":
 
 decrypt env="staging":
 	@sops -d {{env}}.tfvars.enc.json > {{env}}.tfvars.json
+
+unlock lock-id:
+	@{{with-env}} terraform force-unlock {{lock-id}}
+	
+edit file:
+    @sops edit {{file}}
