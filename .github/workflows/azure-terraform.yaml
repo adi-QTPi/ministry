@@ -14,6 +14,7 @@ permissions:
   id-token: write
   contents: read
   pull-requests: write
+  issues: write
 
 jobs:
   set-env:
@@ -48,41 +49,25 @@ jobs:
         id: validate
         continue-on-error: true
         run: |
-          just validate > validate.txt 2>&1
-          echo "stdout<<EOF" >> $GITHUB_OUTPUT
-          cat validate.txt >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-      - name: Security Scan (tfsec)
-        id: tfsec
-        continue-on-error: true
-        uses: aquasecurity/tfsec-action@v1.0.0
+          just validate
+      - name: Post Validate Comment
+        if: always() && github.event_name == 'pull_request'
+        uses: GetTerminus/terraform-pr-commenter@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          soft_fail: false
-      - name: Post PR Comment
-        if: github.event_name == 'pull_request'
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body: |
-            ### Validation & Security Status
-            **Validation:** ${{ steps.validate.outcome == 'success' && 'Passed' || 'Failed' }}
-            **Security Scan:** ${{ steps.tfsec.outcome == 'success' && 'Passed' || 'Failed' }}}
-
-            <details>
-            <summary>Show Validation Logs</summary>
-
-            ```
-            ${{ needs.tf-validate.outputs.validation-output }}
-            ```
-            </details>
+          commenter_type: validate
+          commenter_input: ${{ format('{0}{1}', steps.validate.outputs.stdout, steps.validate.outputs.stderr) }}
+          commenter_exitcode: ${{ steps.validate.outputs.exitcode }}
       - name: Fail Job if issues found
-        if: steps.validate.outcome == 'failure' || steps.tfsec.outcome == 'failure'
+        if: steps.validate.outcome == 'failure'
         run: exit 1
 
   tf-plan:
     needs: [set-env, tf-validate]
     runs-on: ubuntu-latest
+    env:
+      TF_WORKSPACE: ${{ needs.set-env.outputs.env }}
     defaults:
       run:
         working-directory: infra/terraform/azure/main
@@ -93,23 +78,35 @@ jobs:
         with:
           age-private-key: ${{ secrets.AGE_PRIVATE_KEY }}
       - name: Terraform Plan
-        run: just plan ${{ needs.set-env.outputs.env }}
-      - name: Post PR Comment
-        if: github.event_name == 'pull_request'
-        uses: borchero/terraform-plan-comment@v2
+        id: plan
+        continue-on-error: true
+        run: |
+          just plan ${{ needs.set-env.outputs.env }}
+      - name: Post Plan Comment
+        if: always() && github.event_name == 'pull_request'
+        uses: GetTerminus/terraform-pr-commenter@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          planfile: infra/terraform/azure/main/tfplan-${{ needs.set-env.outputs.env }}
+          commenter_type: plan
+          commenter_input: ${{ format('{0}{1}', steps.plan.outputs.stdout, steps.plan.outputs.stderr) }}
+          commenter_exitcode: ${{ steps.plan.outputs.exitcode }}
       - name: Upload Plan Artifact
+        if: steps.plan.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: tfplan-${{ needs.set-env.outputs.env }}
           path: infra/terraform/azure/main/tfplan-${{ needs.set-env.outputs.env }}
+      - name: Fail Job if Plan Failed
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
 
   tf-apply:
     needs: [set-env, tf-plan]
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    env:
+      TF_WORKSPACE: ${{ needs.set-env.outputs.env }}
     defaults:
       run:
         working-directory: infra/terraform/azure/main
