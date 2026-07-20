@@ -21,4 +21,5 @@ tfplan
 !*.enc.tfvars.json
 
 tmp/
-tfplan*
+
+tfplan-*
