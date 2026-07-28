@@ -22,10 +22,20 @@ caddy_proxy_services:
 
   - subdomain: moody
     port: 8096
-    host: "{{ rubie_host }}"
+    host: "{{ raj_host }}"
     extra_options:
       flush_interval: "-1"
 
   - subdomain: paste
     port: 8088
     host: "{{ rubie_host }}"
+
+haproxy_l4_services:
+  - name: k8s_api
+    interface: "{{ ansible_tailscale0.ipv4.address }}"
+    listen_port: 6443
+    balance: roundrobin
+    upstreams:
+      - host: "{{ bella_host }}"
+        port: 6443
+

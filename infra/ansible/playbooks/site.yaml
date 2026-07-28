@@ -3,12 +3,14 @@
   hosts: localhost
   gather_facts: false
   become: false
+  tags: [always]
   tasks:
     - name: Create a secure temporary file
       ansible.builtin.tempfile:
         state: file
         suffix: .key
       register: temp_ssh_key
+      check_mode: false
 
     - name: Write decrypted key to temporary file
       ansible.builtin.copy:
@@ -16,6 +18,7 @@
         dest: "{{ temp_ssh_key.path }}"
         mode: "0600"
       no_log: true
+      check_mode: false
 
     - name: Set the path as a host variable for all hosts
       ansible.builtin.set_fact:
@@ -26,6 +29,7 @@
   hosts: localhost
   gather_facts: false
   become: false
+  tags: [always]
   vars:
     ansible_python_interpreter: "{{ ansible_playbook_python }}"
   roles:
@@ -59,8 +63,10 @@
       loop:
         - { name: "net.ipv4.ip_forward" }
         - { name: "net.ipv6.conf.all.forwarding" }
+      tags: [always]
   roles:
     - role: artis3n.tailscale.machine
+      tags: [tailscale]
       vars:
         state: latest
         verbose: true
@@ -73,18 +79,25 @@
 
     - role: maxhoesel.caddy.caddy_server
       become: true
+      tags: [caddy]
       vars:
         caddy_apply_config: true
         caddy_config_mode: Caddyfile
         caddy_caddyfile: "{{ lookup('template', '../templates/caddy/Caddyfile.j2') }}"
 
+    - role: haproxy
+      become: true
+      tags: [haproxy]
+
 - name: Cleanup temporary SSH key file
   hosts: localhost
   gather_facts: false
   become: false
+  tags: [always]
   tasks:
     - name: Remove the temp key
       ansible.builtin.file:
         path: "{{ hostvars['localhost']['ansible_ssh_private_key_file'] }}"
         state: absent
       when: hostvars['localhost']['ansible_ssh_private_key_file'] is defined
+      check_mode: false

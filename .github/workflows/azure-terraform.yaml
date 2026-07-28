@@ -6,7 +6,7 @@ on:
     paths:
       - "infra/terraform/azure/main/**"
   pull_request:
-    branches: [prod, staging]
+    branches: [prod, staging, main]
     paths:
       - "infra/terraform/azure/main/**"
 
@@ -25,7 +25,7 @@ jobs:
       - id: set-env
         run: |
           TARGET="${{ github.base_ref || github.ref_name }}"
-          if [[ "$TARGET" == *"prod"* ]]; then
+          if [[ "$TARGET" == *"prod"* || "$TARGET" == *"main"* ]]; then
             echo "env=prod" >> $GITHUB_OUTPUT
           else
             echo "env=staging" >> $GITHUB_OUTPUT

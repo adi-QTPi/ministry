@@ -1,0 +1,52 @@
+global
+    log /dev/log local0
+    log /dev/log local1 notice
+    chroot /var/lib/haproxy
+    user haproxy
+    group haproxy
+    daemon
+
+    # Default SSL material locations
+    ca-base /etc/ssl/certs
+    crt-base /etc/ssl/private
+
+    ssl-default-bind-ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384
+    ssl-default-bind-ciphersuites TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256
+    ssl-default-bind-options ssl-min-ver TLSv1.2 no-tls-tickets
+
+defaults
+    log     global
+    mode    tcp
+    option  tcplog
+    option  dontlognull
+    timeout connect 5000
+    timeout client  50000
+    timeout server  50000
+
+{% for svc in haproxy_l4_services %}
+{% set bind_host = svc.interface | default('*', true) %}
+{% if svc.subdomain is defined and svc.subdomain %}
+# SNI-filtered frontend
+frontend {{ svc.name }}_front
+    bind {{ bind_host }}:{{ svc.listen_port }}
+    mode tcp
+    tcp-request inspect-delay 5s
+    tcp-request content accept if { req_ssl_hello_type 1 }
+    use_backend {{ svc.name }}_back if { req_ssl_sni -i {{ svc.subdomain }}.{{ base_domain }} }
+{% else %}
+# Direct L4 proxy frontend (no domain filter)
+frontend {{ svc.name }}_front
+    bind {{ bind_host }}:{{ svc.listen_port }}
+    mode tcp
+    default_backend {{ svc.name }}_back
+{% endif %}
+
+
+backend {{ svc.name }}_back
+    mode tcp
+    balance {{ svc.balance | default('roundrobin') }}
+    {% for upstream in svc.upstreams %}
+    server {{ svc.name }}_upstream_{{ loop.index }} {{ upstream.host }}:{{ upstream.port }} check
+    {% endfor %}
+{% endfor %}
+

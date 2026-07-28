@@ -15,3 +15,5 @@ all:
           ansible_host: "{{ rubie_host }}" 
         teddy:
           ansible_host: "{{ teddy_host }}" 
+        raj:
+          ansible_host: "{{ raj_host }}"
