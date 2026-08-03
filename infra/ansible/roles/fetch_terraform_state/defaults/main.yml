@@ -16,6 +16,6 @@ fetch_terraform_state_secrets:
     vault_name: "vaulted_default_secret"
 
 fetch_terraform_state_local_temp_path: "/tmp/{{ fetch_terraform_state_azure_blob_name }}"
-fetch_terraform_state_vault_output_path: "{{ playbook_dir }}/../inventory/group_vars/public/vault.yaml"
-fetch_terraform_state_vault_pass_path: "{{ playbook_dir }}/../.vault_pass"
+fetch_terraform_state_vault_output_path: "{{ playbook_dir }}/../../inventory/group_vars/public/vault.yaml"
+fetch_terraform_state_vault_pass_path: "{{ playbook_dir }}/../../.vault_pass"
 fetch_terraform_state_vault_pass_name: "VAULT_PASSWORD"

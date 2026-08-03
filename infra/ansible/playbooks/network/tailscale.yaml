@@ -1,0 +1,29 @@
+---
+- name: Ensure Tailscale is configured on the edge server
+  hosts: public
+  become: true
+  pre_tasks:
+    - name: Enable IPv4 and IPv6 forwarding
+      ansible.posix.sysctl:
+        name: "{{ item.name }}"
+        value: "1"
+        sysctl_file: /etc/sysctl.d/99-forwarding.conf
+        sysctl_set: true
+        state: present
+        reload: true
+      loop:
+        - { name: "net.ipv4.ip_forward" }
+        - { name: "net.ipv6.conf.all.forwarding" }
+      tags: [always]
+  roles:
+    - role: artis3n.tailscale.machine
+      tags: [tailscale]
+      vars:
+        state: latest
+        verbose: true
+        tailscale_authkey: "{{ tailscale_oauth_key }}"
+        tailscale_tags:
+          - "server"
+        tailscale_oauth_ephemeral: true
+        tailscale_oauth_preauthorized: true
+        tailscale_args: "--hostname={{ inventory_hostname }} --advertise-exit-node"

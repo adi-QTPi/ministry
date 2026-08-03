@@ -3,7 +3,7 @@
 # this playbook is supposed to be run to prime the servers for further playbooks, which assume that there exists a user named ansible with certain previliges.
 # ansible-playbook ./playbooks/bootstrap.yaml -u ubuntu -K # this command assumes that every server can be sshed on the user "ubuntu"
 - name: Setup ansible user with the appropriate ssh key and passwordless sudo.
-  hosts: all
+  hosts: "{{ bootstrap_target | default('all') }}"
   become: true
 
   tasks:

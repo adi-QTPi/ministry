@@ -7,7 +7,7 @@
 
 - name: Configure HAProxy
   ansible.builtin.template:
-    src: "{{ playbook_dir }}/../templates/haproxy/haproxy.cfg.j2"
+    src: "{{ haproxy_config_template_src }}"
     dest: /etc/haproxy/haproxy.cfg
     mode: "0644"
   notify: Restart HAProxy

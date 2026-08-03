@@ -5,6 +5,12 @@
 {{ base_domain }} {
 {% endif %}
 
+    {% if service.directives is defined and service.directives %}
+    {% for directive in service.directives %}
+    {{ directive }}
+    {% endfor %}
+    {% endif %}
+
     {% if service.extra_options is defined and service.extra_options %}
     reverse_proxy {{ service.host }}:{{ service.port }} {
         

@@ -26,6 +26,16 @@ caddy_proxy_services:
     extra_options:
       flush_interval: "-1"
 
+  - subdomain: read
+    port: 5000
+    host: "{{ raj_host }}"
+    directives:
+      - encode gzip zstd
+  
+  - subdomain: request
+    port: 5656
+    host: "{{ raj_host }}"
+
   - subdomain: paste
     port: 8088
     host: "{{ rubie_host }}"
@@ -38,4 +48,3 @@ haproxy_l4_services:
     upstreams:
       - host: "{{ bella_host }}"
         port: 6443
-

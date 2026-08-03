@@ -1,103 +1,35 @@
 ---
-- name: Prepare temporary SSH key file
+- name: Load SSH key into memory (ssh-agent)
   hosts: localhost
   gather_facts: false
   become: false
   tags: [always]
   tasks:
-    - name: Create a secure temporary file
-      ansible.builtin.tempfile:
-        state: file
-        suffix: .key
-      register: temp_ssh_key
-      check_mode: false
-
-    - name: Write decrypted key to temporary file
-      ansible.builtin.copy:
-        content: "{{ ssh_key_ansible }}"
-        dest: "{{ temp_ssh_key.path }}"
-        mode: "0600"
+    - name: Add key directly to running SSH agent
+      ansible.builtin.shell: |
+        echo "{{ ssh_key_ansible }}" | ssh-add -
       no_log: true
       check_mode: false
 
-    - name: Set the path as a host variable for all hosts
-      ansible.builtin.set_fact:
-        ansible_ssh_private_key_file: "{{ temp_ssh_key.path }}"
-        cacheable: true
-
-- name: Fetch variables from terraform state remote backend
-  hosts: localhost
-  gather_facts: false
-  become: false
-  tags: [always]
+- import_playbook: azure/state.yaml
   vars:
-    ansible_python_interpreter: "{{ ansible_playbook_python }}"
-  roles:
-    - role: fetch_terraform_state
-      vars:
-        fetch_terraform_state_azure_client_id: "{{ azure_client_id }}"
-        fetch_terraform_state_azure_client_secret: "{{ azure_client_secret }}"
-        fetch_terraform_state_azure_tenant_id: "{{ azure_tenant_id }}"
-        fetch_terraform_state_azure_subscription_id: "{{ azure_subscription_id }}"
-        fetch_terraform_state_azure_resource_group: "rg-tfstate"
-        fetch_terraform_state_azure_storage_account: "karmastore"
-        fetch_terraform_state_azure_container: "staging"
-        fetch_terraform_state_azure_blob_name: "staging.terraform.tfstateenv:prod"
+    fetch_terraform_state_secrets:
+      - tf_key: "public_ip"
+        vault_name: "vault_azure_edge_host"
 
-        fetch_terraform_state_secrets:
-          - tf_key: "public_ip"
-            vault_name: "vault_azure_edge_host"
+- import_playbook: network/tailscale.yaml
 
-- name: Ensure reverse proxy on the edge server
-  hosts: public
-  become: true
-  pre_tasks:
-    - name: Enable IPv4 and IPv6 forwarding
-      ansible.posix.sysctl:
-        name: "{{ item.name }}"
-        value: "1"
-        sysctl_file: /etc/sysctl.d/99-forwarding.conf
-        sysctl_set: true
-        state: present
-        reload: true
-      loop:
-        - { name: "net.ipv4.ip_forward" }
-        - { name: "net.ipv6.conf.all.forwarding" }
-      tags: [always]
-  roles:
-    - role: artis3n.tailscale.machine
-      tags: [tailscale]
-      vars:
-        state: latest
-        verbose: true
-        tailscale_authkey: "{{ tailscale_oauth_key }}"
-        tailscale_tags:
-          - "server"
-        tailscale_oauth_ephemeral: true
-        tailscale_oauth_preauthorized: true
-        tailscale_args: "--hostname=ingress --advertise-exit-node"
+- import_playbook: ingress/proxy.yaml
+  vars:
+    proxy_caddy_template_path: "{{ playbook_dir }}/../../templates/caddy/Caddyfile.j2"
+    proxy_haproxy_template_path: "{{ playbook_dir }}/../../templates/haproxy/haproxy.cfg.j2"
 
-    - role: maxhoesel.caddy.caddy_server
-      become: true
-      tags: [caddy]
-      vars:
-        caddy_apply_config: true
-        caddy_config_mode: Caddyfile
-        caddy_caddyfile: "{{ lookup('template', '../templates/caddy/Caddyfile.j2') }}"
-
-    - role: haproxy
-      become: true
-      tags: [haproxy]
-
-- name: Cleanup temporary SSH key file
+- name: Purge SSH key from agent memory
   hosts: localhost
   gather_facts: false
   become: false
   tags: [always]
   tasks:
-    - name: Remove the temp key
-      ansible.builtin.file:
-        path: "{{ hostvars['localhost']['ansible_ssh_private_key_file'] }}"
-        state: absent
-      when: hostvars['localhost']['ansible_ssh_private_key_file'] is defined
+    - name: Clear all keys from ssh-agent
+      ansible.builtin.command: ssh-add -D
       check_mode: false

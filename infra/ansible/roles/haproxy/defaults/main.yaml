@@ -1,2 +1,3 @@
 ---
 haproxy_l4_services: []
+haproxy_config_template_src: "{{ playbook_dir }}/../templates/haproxy/haproxy.cfg.j2"

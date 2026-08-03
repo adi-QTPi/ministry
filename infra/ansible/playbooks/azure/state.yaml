@@ -1,0 +1,19 @@
+---
+- name: Fetch variables from terraform state remote backend
+  hosts: localhost
+  gather_facts: false
+  become: false
+  tags: [always]
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  roles:
+    - role: fetch_terraform_state
+      vars:
+        fetch_terraform_state_azure_client_id: "{{ azure_client_id }}"
+        fetch_terraform_state_azure_client_secret: "{{ azure_client_secret }}"
+        fetch_terraform_state_azure_tenant_id: "{{ azure_tenant_id }}"
+        fetch_terraform_state_azure_subscription_id: "{{ azure_subscription_id }}"
+        fetch_terraform_state_azure_resource_group: "rg-tfstate"
+        fetch_terraform_state_azure_storage_account: "karmastore"
+        fetch_terraform_state_azure_container: "staging"
+        fetch_terraform_state_azure_blob_name: "staging.terraform.tfstateenv:prod"

@@ -5,12 +5,13 @@ set ignore-comments := true
 default:
     @just --list
 
-ping target="all" user="ansible":
-    ansible {{target}} -i ./inventory/hosts.yaml -m ping -u {{user}}
+ping target="all" user="ansible" *flags:
+    ansible {{target}} -i ./inventory/hosts.yaml -m ping -u {{user}} {{flags}}
 
 # Bootstrap a node. Pass '-K' to prompt for sudo password if needed.
-bootstrap user="ansible" *flags:
-    ansible-playbook ./playbooks/bootstrap.yaml -u {{user}} {{flags}}
+# Usage: just bootstrap <target> <user> -- -K
+bootstrap target user="ansible" *flags:
+    ansible-playbook ./playbooks/bootstrap.yaml -u {{user}} -e bootstrap_target={{target}} {{flags}}
 
 # Vault actions like view, edit, create etc.
 vault action="edit" location="./inventory/group_vars/all/vault.yaml":
