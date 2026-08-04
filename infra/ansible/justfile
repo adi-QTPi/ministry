@@ -17,6 +17,11 @@ bootstrap target user="ansible" *flags:
 vault action="edit" location="./inventory/group_vars/all/vault.yaml":
     ansible-vault {{action}} {{location}}
 
+# Encrypt single string and append inline to a vault file.
+# Usage: just vault-secret name=MY_SECRET value="my-password" location=./services/pastebin/vault.yaml
+inline-vault name value location *flags:
+    ansible-vault encrypt_string --vault-password-file .vault_pass --encrypt-vault-id default --name '{{name}}' '{{value}}' {{flags}} | yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' {{location}} - -i
+
 # perform actions related to roles, create, list etc.
 role action="info" role="":
 	ansible-galaxy role {{action}} roles/{{role}}

@@ -4,6 +4,9 @@
     file: "{{ _svc.path }}/manifest.yaml"
     name: _manifest
 
+- name: Load secrets
+  ansible.builtin.include_tasks: secrets.yaml
+
 - name: Set dest directory from service name
   ansible.builtin.set_fact:
     _dest_dir: "{{ service_base_dir }}/{{ _manifest.name }}"
@@ -20,21 +23,59 @@
       delegate_to: "{{ _manifest.host }}"
       become: true
 
-    - name: Copy service directory to target
-      ansible.builtin.copy:
-        src: "{{ _svc.path }}/"
-        dest: "{{ _dest_dir }}/"
-        mode: "0640"
-        directory_mode: "0750"
+    - name: Find all service files
+      ansible.builtin.find:
+        paths: "{{ _svc.path }}"
+        recurse: true
+        hidden: true
+        file_type: file
+        excludes:
+          - manifest.yaml
+          - docker-compose.yaml
+          - "{{ _manifest.vault_file | default('vault.yaml') }}"
+      register: _deploy_files
+
+    - name: Ensure subdirectories exist on target
+      ansible.builtin.file:
+        path: "{{ _dest_dir }}/{{ item.path | relpath(_svc.path) | dirname }}"
+        state: directory
+        mode: "0750"
         owner: "{{ _manifest.uid | default(omit) }}"
         group: "{{ _manifest.gid | default(omit) }}"
+      loop: "{{ _deploy_files.files }}"
+      delegate_to: "{{ _manifest.host }}"
+      become: true
+      when: item.path | relpath(_svc.path) | dirname != '.'
+
+    - name: Template .j2 files to target
+      ansible.builtin.template:
+        src: "{{ item.path }}"
+        dest: "{{ _dest_dir }}/{{ item.path | relpath(_svc.path) | regex_replace('\\.j2$', '') }}"
+        mode: "0640"
+        owner: "{{ _manifest.uid | default(omit) }}"
+        group: "{{ _manifest.gid | default(omit) }}"
+      loop: "{{ _deploy_files.files | selectattr('path', 'search', '\\.j2$') }}"
       delegate_to: "{{ _manifest.host }}"
       become: true
 
-    - name: Remove manifest from target
-      ansible.builtin.file:
-        path: "{{ _dest_dir }}/manifest.yaml"
-        state: absent
+    - name: Copy static files to target
+      ansible.builtin.copy:
+        src: "{{ item.path }}"
+        dest: "{{ _dest_dir }}/{{ item.path | relpath(_svc.path) }}"
+        mode: "0640"
+        owner: "{{ _manifest.uid | default(omit) }}"
+        group: "{{ _manifest.gid | default(omit) }}"
+      loop: "{{ _deploy_files.files | rejectattr('path', 'search', '\\.j2$') }}"
+      delegate_to: "{{ _manifest.host }}"
+      become: true
+
+    - name: Copy docker-compose file to target
+      ansible.builtin.copy:
+        src: "{{ _svc.path }}/docker-compose.yaml"
+        dest: "{{ _dest_dir }}/docker-compose.yaml"
+        mode: "0640"
+        owner: "{{ _manifest.uid | default(omit) }}"
+        group: "{{ _manifest.gid | default(omit) }}"
       delegate_to: "{{ _manifest.host }}"
       become: true
 

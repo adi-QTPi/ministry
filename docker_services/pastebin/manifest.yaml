@@ -1,0 +1,9 @@
+---
+name: pastebin
+host: teddy 
+compose_file: docker-compose.yaml
+uid: 1000
+gid: 1000
+vault_file: vault.yaml
+secrets:
+  admin_password: vault_microbin_admin_pass
