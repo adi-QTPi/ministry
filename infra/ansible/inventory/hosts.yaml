@@ -10,10 +10,10 @@ all:
     internal:
       hosts:
         bella:
-          ansible_host: "{{ bella_host }}"
+          ansible_host: "{{ bella }}"
         rubie:
-          ansible_host: "{{ rubie_host }}" 
+          ansible_host: "{{ rubie }}" 
         teddy:
-          ansible_host: "{{ teddy_host }}" 
+          ansible_host: "{{ teddy }}" 
         raj:
-          ansible_host: "{{ raj_host }}"
+          ansible_host: "{{ raj }}"

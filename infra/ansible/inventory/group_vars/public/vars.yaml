@@ -2,43 +2,43 @@ azure_edge_host: "{{ vault_azure_edge_host }}"
 
 caddy_proxy_services:
   - port: 7890
-    host: "{{ rubie_host }}"
+    host: "{{ rubie }}"
 
   - subdomain: goblin
     port: 8334
-    host: "{{ rubie_host }}"
+    host: "{{ rubie }}"
 
   - subdomain: gringotts
     port: 9876
-    host: "{{ rubie_host }}"
+    host: "{{ rubie }}"
 
   - subdomain: pensieve
     port: 2283
-    host: "{{ rubie_host }}"
+    host: "{{ rubie }}"
 
   - subdomain: stocky
     port: 3001
-    host: "{{ rubie_host }}"
+    host: "{{ rubie }}"
 
   - subdomain: moody
     port: 8096
-    host: "{{ raj_host }}"
+    host: "{{ raj }}"
     extra_options:
       flush_interval: "-1"
 
   - subdomain: read
     port: 5000
-    host: "{{ raj_host }}"
+    host: "{{ raj }}"
     directives:
       - encode gzip zstd
   
   - subdomain: request
     port: 5656
-    host: "{{ raj_host }}"
+    host: "{{ raj }}"
 
   - subdomain: paste
     port: 8088
-    host: "{{ rubie_host }}"
+    host: "{{ rubie }}"
 
 haproxy_l4_services:
   - name: k8s_api
@@ -46,5 +46,5 @@ haproxy_l4_services:
     listen_port: 6443
     balance: roundrobin
     upstreams:
-      - host: "{{ bella_host }}"
+      - host: "{{ bella }}"
         port: 6443

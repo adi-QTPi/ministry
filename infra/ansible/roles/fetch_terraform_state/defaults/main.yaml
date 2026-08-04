@@ -2,10 +2,12 @@
 ---
 # defaults file for roles/fetch_terraform_state
 
-fetch_terraform_state_azure_client_id: ""
-fetch_terraform_state_azure_client_secret: ""
-fetch_terraform_state_azure_tenant_id: ""
-fetch_terraform_state_azure_subscription_id: ""
+fetch_terraform_state_service_principal:
+  client_id: ""
+  client_secret: ""
+  tenant_id: ""
+  subscription_id: ""
+
 fetch_terraform_state_azure_resource_group: "tf-state-rg"
 fetch_terraform_state_azure_storage_account: "tfstatestorage"
 fetch_terraform_state_azure_container: "tfstate"
@@ -15,7 +17,7 @@ fetch_terraform_state_secrets:
   - tf_key: "default_secret"
     vault_name: "vaulted_default_secret"
 
-fetch_terraform_state_local_temp_path: "/tmp/{{ fetch_terraform_state_azure_blob_name }}"
+fetch_terraform_state_local_temp_path: "/tmp/{{ fetch_terraform_state_azure_blob_name | regex_replace('[^a-zA-Z0-9._-]', '_') }}"
 fetch_terraform_state_vault_output_path: "{{ playbook_dir }}/../../inventory/group_vars/public/vault.yaml"
 fetch_terraform_state_vault_pass_path: "{{ playbook_dir }}/../../.vault_pass"
 fetch_terraform_state_vault_pass_name: "VAULT_PASSWORD"

@@ -10,7 +10,7 @@ tailscale_oauth_key: "{{ vault_tailscale_oauth_key }}"
 
 base_domain: "{{ vault_base_domain }}"
 
-bella_host: 100.96.156.117
-rubie_host: 100.107.240.67
-teddy_host: 100.80.19.125
-raj_host: 100.98.110.23
+bella: 100.96.156.117
+rubie: 100.107.240.67
+teddy: 100.80.19.125
+raj: 100.98.110.23

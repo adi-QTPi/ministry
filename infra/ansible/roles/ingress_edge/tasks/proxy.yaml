@@ -1,0 +1,14 @@
+---
+- name: Configure caddy reverse proxy
+  ansible.builtin.include_role:
+    name: maxhoesel.caddy.caddy_server
+  vars:
+    caddy_apply_config: true
+    caddy_config_mode: Caddyfile
+    caddy_caddyfile: "{{ lookup('template', ingress_edge_proxy_caddy_template) }}"
+
+- name: Configure haproxy load balancer
+  ansible.builtin.include_role:
+    name: haproxy
+  vars:
+    haproxy_config_template_src: "{{ ingress_edge_proxy_haproxy_template }}"

@@ -1,0 +1,58 @@
+---
+- name: Load manifest for {{ _svc.path | basename }}
+  ansible.builtin.include_vars:
+    file: "{{ _svc.path }}/manifest.yaml"
+    name: _manifest
+
+- name: Set dest directory from service name
+  ansible.builtin.set_fact:
+    _dest_dir: "{{ service_base_dir }}/{{ _manifest.name }}"
+
+- name: Deploy service to target host
+  block:
+    - name: Ensure service directory exists on target
+      ansible.builtin.file:
+        path: "{{ _dest_dir }}"
+        state: directory
+        mode: "0750"
+        owner: "{{ _manifest.uid | default(omit) }}"
+        group: "{{ _manifest.gid | default(omit) }}"
+      delegate_to: "{{ _manifest.host }}"
+      become: true
+
+    - name: Copy service directory to target
+      ansible.builtin.copy:
+        src: "{{ _svc.path }}/"
+        dest: "{{ _dest_dir }}/"
+        mode: "0640"
+        directory_mode: "0750"
+        owner: "{{ _manifest.uid | default(omit) }}"
+        group: "{{ _manifest.gid | default(omit) }}"
+      delegate_to: "{{ _manifest.host }}"
+      become: true
+
+    - name: Remove manifest from target
+      ansible.builtin.file:
+        path: "{{ _dest_dir }}/manifest.yaml"
+        state: absent
+      delegate_to: "{{ _manifest.host }}"
+      become: true
+
+    - name: Start service containers on target
+      community.docker.docker_compose_v2:
+        project_src: "{{ _dest_dir }}"
+        project_name: "{{ _manifest.name }}"
+        state: present
+        remove_orphans: true
+      delegate_to: "{{ _manifest.host }}"
+      become: true
+
+- name: Compute other hosts
+  ansible.builtin.set_fact:
+    _other_hosts: "{{ groups['internal'] | difference([_manifest.host]) }}"
+
+- name: Tear down service on all other internal hosts
+  ansible.builtin.include_tasks: teardown.yaml
+  loop: "{{ _other_hosts }}"
+  loop_control:
+    loop_var: _other

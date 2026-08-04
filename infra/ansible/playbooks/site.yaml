@@ -11,18 +11,51 @@
       no_log: true
       check_mode: false
 
-- import_playbook: azure/state.yaml
+- name: Fetch terraform state for ingress edge
+  hosts: localhost
+  gather_facts: false
+  become: false
+  tags: [ingress, state]
   vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
     fetch_terraform_state_secrets:
       - tf_key: "public_ip"
         vault_name: "vault_azure_edge_host"
+  roles:
+    - role: fetch_terraform_state
+      vars:
+        fetch_terraform_state_service_principal:
+          client_id: "{{ azure_client_id }}"
+          client_secret: "{{ azure_client_secret }}"
+          tenant_id: "{{ azure_tenant_id }}"
+          subscription_id: "{{ azure_subscription_id }}"
+        fetch_terraform_state_azure_resource_group: "rg-tfstate"
+        fetch_terraform_state_azure_storage_account: "karmastore"
+        fetch_terraform_state_azure_container: "staging"
+        fetch_terraform_state_azure_blob_name: "staging.terraform.tfstateenv:prod"
+        fetch_terraform_state_vault_pass_path: "{{ playbook_dir }}/../.vault_pass"
 
-- import_playbook: network/tailscale.yaml
-
-- import_playbook: ingress/proxy.yaml
+- name: Configure ingress edge node
+  hosts: public
+  gather_facts: true
+  become: true
+  tags: [ingress, tailscale, caddy, haproxy]
   vars:
-    proxy_caddy_template_path: "{{ playbook_dir }}/../../templates/caddy/Caddyfile.j2"
-    proxy_haproxy_template_path: "{{ playbook_dir }}/../../templates/haproxy/haproxy.cfg.j2"
+    ingress_edge_tailscale_args: "--hostname={{ inventory_hostname }} --ssh --advertise-exit-node"
+    ingress_edge_proxy_caddy_template: "{{ playbook_dir }}/../templates/caddy/Caddyfile.j2"
+    ingress_edge_proxy_haproxy_template: "{{ playbook_dir }}/../templates/haproxy/haproxy.cfg.j2"
+  roles:
+    - role: ingress_edge
+
+- name: Deploy all services
+  hosts: localhost
+  gather_facts: false
+  become: false
+  tags: [docker]
+  vars:
+    service_manifests_dir: "{{ playbook_dir }}/../services"
+  roles:
+    - role: deploy_services
 
 - name: Purge SSH key from agent memory
   hosts: localhost

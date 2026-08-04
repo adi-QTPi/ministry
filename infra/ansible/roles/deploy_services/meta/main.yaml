@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MIT-0
+galaxy_info:
+  author: karma
+  description: find service manifests in directory and invoke deploy_service per service
+  company: me Inc.
+  license: MIT
+  min_ansible_version: "2.14"
+  galaxy_tags: []
+dependencies: []

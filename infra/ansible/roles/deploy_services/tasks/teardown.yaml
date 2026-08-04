@@ -1,0 +1,16 @@
+- name: Cleanup teardown host
+  block:
+    - name: Stop and remove containers on {{ _other }}
+      community.docker.docker_compose_v2:
+        project_src: "{{ _dest_dir }}"
+        project_name: "{{ _manifest.name }}"
+        state: absent
+        remove_orphans: true
+
+    - name: Wipe service directory on {{ _other }}
+      ansible.builtin.file:
+        path: "{{ _dest_dir }}"
+        state: absent
+  delegate_to: "{{ _other }}"
+  become: true
+  ignore_errors: true   # <--- Applies to all tasks inside the block

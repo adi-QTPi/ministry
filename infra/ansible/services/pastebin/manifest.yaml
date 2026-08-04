@@ -1,0 +1,4 @@
+---
+name: pastebin
+host: teddy 
+compose_file: docker-compose.yaml

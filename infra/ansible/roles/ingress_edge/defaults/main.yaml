@@ -1,0 +1,4 @@
+---
+ingress_edge_tailscale_args: "--hostname={{ inventory_hostname }} --ssh --advertise-exit-node"
+ingress_edge_proxy_caddy_template: ""
+ingress_edge_proxy_haproxy_template: ""

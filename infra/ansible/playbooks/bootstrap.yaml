@@ -4,6 +4,7 @@
 # ansible-playbook ./playbooks/bootstrap.yaml -u ubuntu -K # this command assumes that every server can be sshed on the user "ubuntu"
 - name: Setup ansible user with the appropriate ssh key and passwordless sudo.
   hosts: "{{ bootstrap_target | default('all') }}"
+  gather_facts: true
   become: true
 
   tasks:
@@ -15,6 +16,18 @@
         append: true
         shell: /bin/bash
 
+    - name: Ensure docker group exists
+      ansible.builtin.group:
+        name: docker
+        state: present
+
+    - name: Add ansible user to docker group
+      ansible.builtin.user:
+        name: ansible
+        groups:
+          - docker
+        append: true
+
     - name: Authorized ssh key
       ansible.posix.authorized_key:
         user: ansible
@@ -24,5 +37,18 @@
       ansible.builtin.copy:
         dest: /etc/sudoers.d/ansible
         content: "ansible ALL=(ALL) NOPASSWD: ALL\n"
-        mode: "0440" # readonly
+        mode: "0440"
         validate: /usr/sbin/visudo -cf %s
+
+    - name: Install and connect Tailscale
+      ansible.builtin.include_role:
+        name: artis3n.tailscale.machine
+      vars:
+        state: latest
+        verbose: true
+        tailscale_authkey: "{{ tailscale_oauth_key }}"
+        tailscale_tags:
+          - "server"
+        tailscale_oauth_ephemeral: true
+        tailscale_oauth_preauthorized: true
+        tailscale_args: "--hostname={{ inventory_hostname }} --ssh"

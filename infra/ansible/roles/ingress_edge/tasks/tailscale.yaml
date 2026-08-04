@@ -1,0 +1,24 @@
+---
+- name: Enable IPv4 and IPv6 forwarding
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "1"
+    sysctl_file: /etc/sysctl.d/99-forwarding.conf
+    sysctl_set: true
+    state: present
+    reload: true
+  loop:
+    - { name: "net.ipv4.ip_forward" }
+    - { name: "net.ipv6.conf.all.forwarding" }
+
+- name: Advertise as tailscale exit node
+  ansible.builtin.include_role:
+    name: artis3n.tailscale.machine
+  vars:
+    state: present
+    tailscale_authkey: "{{ tailscale_oauth_key }}"
+    tailscale_tags:
+      - "server"
+    tailscale_oauth_ephemeral: true
+    tailscale_oauth_preauthorized: true
+    tailscale_args: "{{ ingress_edge_tailscale_args }}"
