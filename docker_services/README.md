@@ -107,7 +107,7 @@ Keep the service directory in `docker_services/` — preserves vault and config 
 ## What Happens During Deploy
 
 1. **Discover** — scans `docker_services/` for directories with `manifest.yaml`
-2. **Teardown** — on all hosts except target (or all hosts if `host: none`): `docker compose down` + delete `/services/<name>`
+2. **Teardown** — on all hosts except target (or all hosts if `host: none`): `docker compose down` + delete `docker-compose.yaml`. Bind-mounted volumes and data files are **not** removed.
 3. **Deploy** — creates `/services/<name>`, copies all files (excluding `manifest.yaml` + `vault.yaml`), renders `.j2` files, runs `docker compose up`
 
 ## Notes

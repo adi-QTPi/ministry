@@ -1,0 +1,7 @@
+services:
+  mysite:
+    image: adiqtpi/portfolio_march:latest
+    container_name: portfolio-karma
+    restart: always
+    ports:
+      - "7890:80"

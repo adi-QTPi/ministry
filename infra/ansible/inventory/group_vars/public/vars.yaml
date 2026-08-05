@@ -2,7 +2,7 @@ azure_edge_host: "{{ vault_azure_edge_host }}"
 
 caddy_proxy_services:
   - port: 7890
-    host: "{{ rubie }}"
+    host: "{{ teddy }}"
 
   - subdomain: goblin
     port: 8334
@@ -38,7 +38,7 @@ caddy_proxy_services:
 
   - subdomain: paste
     port: 8088
-    host: "{{ rubie }}"
+    host: "{{ teddy }}"
 
 haproxy_l4_services:
   - name: k8s_api
