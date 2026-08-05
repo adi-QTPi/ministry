@@ -12,6 +12,7 @@
     _dest_dir: "{{ service_base_dir }}/{{ _manifest.name }}"
 
 - name: Deploy service to target host
+  when: _manifest.host != 'none'
   block:
     - name: Ensure service directory exists on target
       ansible.builtin.file:
@@ -88,9 +89,14 @@
       delegate_to: "{{ _manifest.host }}"
       become: true
 
-- name: Compute other hosts
+- name: Compute hosts to tear down
   ansible.builtin.set_fact:
-    _other_hosts: "{{ groups['internal'] | difference([_manifest.host]) }}"
+    _other_hosts: >-
+      {%- if _manifest.host == 'none' -%}
+      {{ groups['internal'] }}
+      {%- else -%}
+      {{ groups['internal'] | difference([_manifest.host]) }}
+      {%- endif -%}
 
 - name: Tear down service on all other internal hosts
   ansible.builtin.include_tasks: teardown.yaml

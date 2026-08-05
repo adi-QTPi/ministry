@@ -4,28 +4,17 @@ services:
     container_name: pastebin
     restart: unless-stopped
     ports:
-      # Microbin listens on 8080 internally, mapped to your existing 8088 on the host
       - "8088:8080"
     environment:
-      # Sets the base URL for QR codes and copying links
       - MICROBIN_PUBLIC_PATH=https://paste.karma.run.place
-
-      # Enables the dashboard/list of past pastes
       - MICROBIN_PUBLIC_VOLUMES=true
-
-      # Allows you to edit pastes after creating them
       - MICROBIN_EDITABLE=true
-
-      # Keeps the top navigation bar visible so you can access the Pastelist
       - MICROBIN_HIDE_HEADER=false
-
-      # (Optional) Set timezone for accurate paste timestamps
       - TZ=Asia/Kolkata
     volumes:
-      # Microbin stores its SQLite DB and files in /app/microbin_data
       - ./data:/app/microbin_data
     deploy:
       resources:
         limits:
-          cpus: '0.50'      # Hard limit: maximum of 50% of a single CPU core
-          memory: 128M      # Hard limit: maximum of 128 Megabytes of RAM
+          cpus: '0.50'
+          memory: 128M 

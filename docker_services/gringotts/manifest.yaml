@@ -1,0 +1,7 @@
+---
+name: gringotts
+host: rubie
+compose_file: docker-compose.yaml
+vault_file: vault.yaml
+secrets:
+  karma_password: vault_gringotts_karma_pass

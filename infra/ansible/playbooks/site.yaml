@@ -34,6 +34,7 @@
         fetch_terraform_state_azure_container: "staging"
         fetch_terraform_state_azure_blob_name: "staging.terraform.tfstateenv:prod"
         fetch_terraform_state_vault_pass_path: "{{ playbook_dir }}/../.vault_pass"
+        fetch_terraform_state_vault_output_path: "{{ playbook_dir }}/../inventory/group_vars/public/vault.yaml"
 
 - name: Configure ingress edge node
   hosts: public

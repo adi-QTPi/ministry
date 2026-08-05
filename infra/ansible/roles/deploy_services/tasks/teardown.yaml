@@ -7,10 +7,10 @@
         state: absent
         remove_orphans: true
 
-    - name: Wipe service directory on {{ _other }}
+    - name: Remove compose file on {{ _other }}
       ansible.builtin.file:
-        path: "{{ _dest_dir }}"
+        path: "{{ _dest_dir }}/docker-compose.yaml"
         state: absent
   delegate_to: "{{ _other }}"
   become: true
-  ignore_errors: true   # <--- Applies to all tasks inside the block
+  ignore_errors: true

@@ -1,0 +1,37 @@
+address: 0.0.0.0
+port: 80
+tls: false
+cert: cert.pem
+key: key.pem
+prefix: /
+debug: false
+noSniff: false
+behindProxy: true
+directory: /data
+permissions: R
+rules: []
+rulesBehavior: overwrite
+log:
+  format: console
+  colors: true
+  outputs:
+    - stderr
+cors:
+  enabled: false
+  credentials: true
+  allowed_headers:
+    - Depth
+  allowed_hosts:
+    - http://localhost:8080
+  allowed_methods:
+    - GET
+  exposed_headers:
+    - Content-Length
+    - Content-Range
+users:
+  - username: karma
+    password: "{{ _secrets.karma_password }}"
+    permissions: CRUD
+    rules:
+      - path: .*
+        permissions: CRUD
