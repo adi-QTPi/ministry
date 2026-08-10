@@ -1,4 +1,4 @@
 ---
 name: portfolio_march
-host: teddy 
+host: rubie 
 compose_file: docker-compose.yaml

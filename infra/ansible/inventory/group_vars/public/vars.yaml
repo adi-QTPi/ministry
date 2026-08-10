@@ -1,5 +1,7 @@
 azure_edge_host: "{{ vault_azure_edge_host }}"
 
+k8s_apps_ingress: "{{ bella }}"
+
 caddy_proxy_services:
   - port: 7890
     host: "{{ teddy }}"
@@ -40,8 +42,16 @@ caddy_proxy_services:
     port: 8088
     host: "{{ teddy }}"
 
+  - subdomain: "*.apps"
+    port: 31150
+    host: "{{ k8s_apps_ingress }}"
+    
+  - subdomain: "*.stress"
+    port: 31150
+    host: "{{ k8s_apps_ingress }}"
+
 haproxy_l4_services:
-  - name: k8s_api
+  - name: k8s-api
     interface: "{{ ansible_tailscale0.ipv4.address }}"
     listen_port: 6443
     balance: roundrobin

@@ -1,6 +1,6 @@
 ---
 name: pastebin
-host: teddy 
+host: rubie 
 compose_file: docker-compose.yaml
 vault_file: vault.yaml
 secrets:

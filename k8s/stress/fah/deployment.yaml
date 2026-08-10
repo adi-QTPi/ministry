@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: foldingathome
+  namespace: stress
+  labels:
+    app: foldingathome
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: foldingathome
+  template:
+    metadata:
+      labels:
+        app: foldingathome
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - bella
+      containers:
+        - name: fah-client
+          image: lscr.io/linuxserver/foldingathome:latest
+          ports:
+            - containerPort: 7396
+          env:
+            - name: PUID
+              value: "1023"
+            - name: PGID
+              value: "1023"
+            - name: TZ
+              value: Asia/Kolkata
+            - name: ACCOUNT_TOKEN
+              value: fm7ccfm7YTByZYTBaqWnKaqW8artI8areGWsueGWhPs
+            - name: MACHINE_NAME
+              value: karma-bella
+          volumeMounts:
+            - name: fah-data
+              mountPath: /config
+          resources:
+            limits:
+              cpu: "0.80"
+              memory: "3400Mi"
+            requests:
+              cpu: "0.20"
+              memory: "1700Mi"
+      volumes:
+        - name: fah-data
+          persistentVolumeClaim:
+            claimName: fah-data-pvc

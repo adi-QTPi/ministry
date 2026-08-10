@@ -21,4 +21,4 @@
       - "server"
     tailscale_oauth_ephemeral: true
     tailscale_oauth_preauthorized: true
-    tailscale_args: "{{ ingress_edge_tailscale_args }}"
+    tailscale_args: "--reset {{ ingress_edge_tailscale_args }}"
