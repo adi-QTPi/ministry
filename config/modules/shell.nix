@@ -54,7 +54,7 @@ in
       "lgit" = "lazygit";
       "curl" = "curlie";
       "tf" = "terraform";
-      "agi" = "antigravity-ide";
+      "k" = "kubectl";
     };
     initContent = ''
       bindkey -M viins 'jk' vi-cmd-mode

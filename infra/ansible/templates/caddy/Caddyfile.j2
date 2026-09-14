@@ -1,9 +1,30 @@
+{
+    on_demand_tls {
+        ask http://localhost:5555/check
+    }
+}
+
+http://localhost:5555 {
+    respond /check 200
+}
+
 {% for service in caddy_proxy_services %}
-{% if service.subdomain is defined and service.subdomain %}
+{% if service.subdomain is defined and service.subdomain and '*' in service.subdomain %}
+{{ service.subdomain }}.{{ base_domain }} {
+    tls {
+        on_demand
+    }
+{% elif service.subdomain is defined and service.subdomain %}
 {{ service.subdomain }}.{{ base_domain }} {
 {% else %}
 {{ base_domain }} {
 {% endif %}
+
+    {% if service.directives is defined and service.directives %}
+    {% for directive in service.directives %}
+    {{ directive }}
+    {% endfor %}
+    {% endif %}
 
     {% if service.extra_options is defined and service.extra_options %}
     reverse_proxy {{ service.host }}:{{ service.port }} {

@@ -1,0 +1,100 @@
+name: ansible-verify
+
+on:
+  pull_request:
+    branches: [prod, staging]
+    paths:
+      - "infra/ansible/**"
+
+permissions:
+  pull-requests: write 
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      tf_changed: ${{ steps.filter.outputs.tf }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            tf: 'infra/terraform/**'
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/ansible
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - name: Install Ansible Ecosystem
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible-core ansible-lint
+      - name: Install Ansible Galaxy Dependencies
+        run: |
+          ansible-galaxy install -r requirements.yaml
+      - name: Create Vault Password File
+        run: |
+          echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > .vault_pass
+      - name: Find Existing Lint Comment
+        uses: peter-evans/find-comment@v3
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: "[bot]"
+          body-includes: "Ansible Lint Status Report"
+      - name: Run Ansible Validation Checks
+        id: ansible_check
+        continue-on-error: true 
+        run: |
+          echo "### Ansible Lint & Syntax Report" > check_output.md
+          echo "\`\`\`text" >> check_output.md
+
+          echo "=== RUNNING SYNTAX CHECK ===" >> check_output.md
+          ansible-playbook -i inventory/hosts.yaml playbooks/site.yaml --syntax-check >> check_output.md 2>&1
+          SYNTAX_RC=$?
+
+          echo -e "\n=== RUNNING LINTER ===" >> check_output.md
+          ansible-lint playbooks/site.yaml playbooks/bootstrap.yaml >> check_output.md 2>&1
+          LINT_RC=$?
+
+          echo "\`\`\`" >> check_output.md
+
+          # Add status emblem based on return codes
+          if [ $SYNTAX_RC -eq 0 ] && [ $LINT_RC -eq 0 ]; then
+            echo -e "\n### Validation Passed!" >> check_output.md
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo -e "\n### Validation Failed! Please resolve the errors printed above." >> check_output.md
+            echo "status=failure" >> $GITHUB_OUTPUT
+          fi
+      - name: Create or Update PR Comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body-path: infra/ansible/check_output.md
+          edit-mode: replace 
+      - name: Live Playbook Dry-Run (--check)
+        id: dry_run
+        if: needs.detect-changes.outputs.tf_changed == 'false'
+        continue-on-error: true
+        env:
+          ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
+        run: |
+          cd infra/ansible
+          echo "$ANSIBLE_VAULT_PASSWORD" > .vault_pass
+          
+      - name: Enforce Check Failure
+        if: steps.ansible_check.outputs.status == 'failure'
+        run: |
+          echo "Ansible checks failed. Check the generated PR comment for details."
+          exit 1

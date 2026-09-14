@@ -1,0 +1,4 @@
+---
+name: bento_pdf
+host: rubie
+compose_file: docker-compose.yaml
