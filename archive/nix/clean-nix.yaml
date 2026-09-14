@@ -1,0 +1,207 @@
+# DESTRUCTIVE: removes Nix, Home Manager, and related state from Linux hosts.
+# Assumes multi-user Nix install on a systemd Linux host.
+- name: Purge Nix and Home Manager from Linux hosts
+  hosts: "{{ nix_cleanup_target | default('all') }}"
+  gather_facts: true
+  become: true
+
+  vars:
+    nix_user_shell_configs:
+      - .bashrc
+      - .zshrc
+      - .profile
+      - .config/fish/config.fish
+
+  tasks:
+    # --- 1. Remove Home Manager and user-level Nix state -------------------
+    - name: Gather passwd database
+      ansible.builtin.getent:
+        database: passwd
+
+    - name: Build list of real users and home directories
+      ansible.builtin.set_fact:
+        nix_users: >-
+          {%- set users = [] -%}
+          {%- for name, fields in ansible_facts.getent_passwd.items() -%}
+          {%-   set home = fields[4] -%}
+          {%-   if home | regex_search('^/(home/|root)') -%}
+          {%-     set _ = users.append({'name': name, 'home': home}) -%}
+          {%-   endif -%}
+          {%- endfor -%}
+          {{ users }}
+        nix_user_homes: >-
+          {{ ansible_facts.getent_passwd.values()
+             | list
+             | map(attribute='4')
+             | select('regex', '^/(home/|root)')
+             | list }}
+
+    - name: Build list of users with nix-managed login shells
+      ansible.builtin.set_fact:
+        nix_shell_users: >-
+          {%- set users = [] -%}
+          {%- for name, fields in ansible_facts.getent_passwd.items() -%}
+          {%-   set shell = fields[5] -%}
+          {%-   if shell | regex_search('nix') -%}
+          {%-     set _ = users.append(name) -%}
+          {%-   endif -%}
+          {%- endfor -%}
+          {{ users }}
+
+    - name: Reset nix-managed login shells to bash
+      ansible.builtin.user:
+        name: "{{ item }}"
+        shell: /bin/bash
+      loop: "{{ nix_shell_users }}"
+
+    - name: Expire home-manager generations
+      ansible.builtin.command: "{{ item.home }}/.nix-profile/bin/home-manager expire-generations 0"
+      become_user: "{{ item.name }}"
+      loop: "{{ nix_users }}"
+      ignore_errors: true
+      changed_when: false
+      environment:
+        PATH: "{{ item.home }}/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+    - name: Remove home-manager from nix profile
+      ansible.builtin.command: "nix profile remove home-manager"
+      become_user: "{{ item.name }}"
+      loop: "{{ nix_users }}"
+      ignore_errors: true
+      changed_when: false
+      environment:
+        PATH: "{{ item.home }}/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+    - name: Remove home-manager from nix-env profile
+      ansible.builtin.command: "nix-env -e home-manager"
+      become_user: "{{ item.name }}"
+      loop: "{{ nix_users }}"
+      ignore_errors: true
+      changed_when: false
+      environment:
+        PATH: "{{ item.home }}/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+
+    - name: Delete broken nix symlinks in user homes
+      ansible.builtin.shell: |
+        for home in {{ nix_user_homes | map('quote') | join(' ') }}; do
+          find "$home" -xtype l -lname '*nix*' -delete
+        done
+      changed_when: false
+
+    - name: Remove user-level nix config directories
+      ansible.builtin.file:
+        path: "{{ item.0.home }}/{{ item.1 }}"
+        state: absent
+      loop: "{{ nix_users | product(['.config/home-manager', '.config/nixpkgs', '.nix-profile', '.nix-defexpr', '.nix-channels', '.cache/nix', '.local/state/nix', '.local/state/home-manager']) | list }}"
+
+    - name: Remove home-manager-managed shell configs
+      ansible.builtin.file:
+        path: "{{ item.0.home }}/{{ item.1 }}"
+        state: absent
+      loop: "{{ nix_users | product(['.zshrc', '.zshenv', '.zprofile']) | list }}"
+
+    # --- 2. Strip shell and profile hooks ----------------------------------
+    - name: Remove system nix profile scripts and config
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/profile.d/nix.sh
+        - /etc/profile.d/nix-daemon.sh
+        - /etc/nix/nix.conf
+
+    - name: Scrub nix lines from system shell configs
+      ansible.builtin.shell: |
+        for f in /etc/bash.bashrc /etc/bashrc /etc/zshrc /etc/profile /etc/fish/config.fish; do
+          [ -f "$f" ] || continue
+          sed -i '/^# Nix$/,/^# End Nix$/d' "$f"
+          sed -i -E '/(nix-profile|nix-daemon|nix\.sh|NIX_PATH|nix-env|nix-defexpr|nix-channels|\/nix\/)/d' "$f"
+        done
+      changed_when: false
+
+    - name: Scrub nix lines from user shell configs
+      ansible.builtin.shell: |
+        for home in {{ nix_user_homes | map('quote') | join(' ') }}; do
+          for f in {{ nix_user_shell_configs | map('quote') | join(' ') }}; do
+            file="$home/$f"
+            [ -f "$file" ] || continue
+            sed -i '/^# Nix$/,/^# End Nix$/d' "$file"
+            sed -i -E '/(nix-profile|nix-daemon|nix\.sh|NIX_PATH|nix-env|nix-defexpr|nix-channels|\/nix\/)/d' "$file"
+          done
+        done
+      changed_when: false
+
+    # --- 3. Stop and remove Nix services -----------------------------------
+    - name: Terminate running nix-daemon processes
+      ansible.builtin.command: pkill -f nix-daemon
+      ignore_errors: true
+      changed_when: false
+
+    - name: Stop and disable nix-daemon service and socket
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: stopped
+        enabled: false
+      loop:
+        - nix-daemon.service
+        - nix-daemon.socket
+      ignore_errors: true
+
+    - name: Remove nix systemd unit files and drop-ins
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/systemd/system/nix-daemon.service
+        - /etc/systemd/system/nix-daemon.socket
+        - /etc/systemd/system/nix-daemon.service.d
+        - /etc/systemd/system/nix-daemon.socket.d
+
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    # --- 4. Remove Nix system accounts and group ---------------------------
+    - name: Collect nix build users
+      ansible.builtin.set_fact:
+        nixbld_users: "{{ ansible_facts.getent_passwd.keys() | select('match', '^nixbld') | list }}"
+
+    - name: Delete nix build users
+      ansible.builtin.user:
+        name: "{{ item }}"
+        state: absent
+        remove: true
+      loop: "{{ nixbld_users }}"
+
+    - name: Delete nix build group
+      ansible.builtin.group:
+        name: nixbld
+        state: absent
+
+    # --- 5. Wipe Nix storage and verify ------------------------------------
+    - name: Unmount all /nix mounts
+      ansible.builtin.command: umount -R /nix
+      ignore_errors: true
+      changed_when: false
+
+    - name: Remove /nix and /etc/nix
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /nix
+        - /etc/nix
+
+    - name: Delete leftover nix symlinks
+      ansible.builtin.command: find /etc /home /root -xtype l -lname '*nix*' -delete
+      changed_when: false
+
+    - name: Scan for leftover nix symlinks
+      ansible.builtin.command: find /etc /home /root -xtype l -lname '*nix*'
+      register: nix_leftover_symlinks
+      changed_when: false
+      ignore_errors: true
+
+    - name: Report leftover nix symlinks
+      ansible.builtin.debug:
+        var: nix_leftover_symlinks.stdout_lines
