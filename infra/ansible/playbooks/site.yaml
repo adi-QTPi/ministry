@@ -7,7 +7,9 @@
   tasks:
     - name: Add key directly to running SSH agent
       ansible.builtin.shell: |
+        set -o pipefail
         echo "{{ ssh_key_ansible }}" | ssh-add -
+      changed_when: false
       no_log: true
       check_mode: false
 
@@ -69,4 +71,5 @@
   tasks:
     - name: Clear all keys from ssh-agent
       ansible.builtin.command: ssh-add -D
+      changed_when: false
       check_mode: false

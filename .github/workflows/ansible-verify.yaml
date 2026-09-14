@@ -10,7 +10,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  validate:
+  syntax:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -23,20 +23,75 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: "pip"
 
-      - name: Install Ansible Ecosystem
-        run: |
-          python -m pip install --upgrade pip
-          pip install ansible-core ansible-lint
+      - name: Install Ansible Core
+        run: pip install ansible-core
+
+      - name: Cache Ansible Galaxy Collections
+        uses: actions/cache@v4
+        with:
+          path: ~/.ansible/collections
+          key: galaxy-${{ hashFiles('infra/ansible/requirements.yaml') }}
 
       - name: Install Ansible Galaxy Dependencies
-        run: |
-          ansible-galaxy install -r requirements.yaml
+        run: ansible-galaxy install -r requirements.yaml
 
       - name: Create Vault Password File
+        run: echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > .vault_pass
+
+      - name: Syntax Check
         run: |
-          echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > .vault_pass
+          echo "=== SYNTAX CHECK ===" > syntax_output.txt
+          ansible-playbook -i inventory/hosts.yaml playbooks/site.yaml --syntax-check >> syntax_output.txt 2>&1
+
+      - name: Upload Syntax Output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: syntax-output
+          path: infra/ansible/syntax_output.txt
+          if-no-files-found: ignore
+
+  lint:
+    needs: syntax
+    if: always()
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/ansible
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Ansible Lint
+        run: pip install ansible-core ansible-lint
+
+      - name: Cache Ansible Galaxy Collections
+        uses: actions/cache@v4
+        with:
+          path: ~/.ansible/collections
+          key: galaxy-${{ hashFiles('infra/ansible/requirements.yaml') }}
+
+      - name: Install Ansible Galaxy Dependencies
+        run: ansible-galaxy install -r requirements.yaml
+
+      - name: Install cowsay
+        run: sudo apt-get update && sudo apt-get install -y cowsay
+
+      - name: Create Vault Password File
+        run: echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}" > .vault_pass
+
+      - name: Download Syntax Output
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          name: syntax-output
+          path: infra/ansible
 
       - name: Find Existing Lint Comment
         uses: peter-evans/find-comment@v3
@@ -44,32 +99,58 @@ jobs:
         with:
           issue-number: ${{ github.event.pull_request.number }}
           comment-author: "[bot]"
-          body-includes: "Ansible Lint Status Report"
+          body-includes: "Ansible Lint & Syntax Report"
 
-      - name: Run Ansible Validation Checks
-        id: ansible_check
+      - name: Lint Check
+        id: lint
         continue-on-error: true
         run: |
-          echo "### Ansible Lint & Syntax Report" > check_output.md
-          echo "\`\`\`text" >> check_output.md
+          echo "=== LINT ===" > lint_output.txt
+          ansible-lint playbooks/site.yaml playbooks/bootstrap.yaml >> lint_output.txt 2>&1
 
-          echo "=== RUNNING SYNTAX CHECK ===" >> check_output.md
-          ansible-playbook -i inventory/hosts.yaml playbooks/site.yaml --syntax-check >> check_output.md 2>&1
-          SYNTAX_RC=$?
+      - name: Generate Report
+        run: |
+          if [ "${{ needs.syntax.result }}" = "success" ]; then SYNTAX_STATUS="PASS"; else SYNTAX_STATUS="FAIL"; fi
+          if [ "${{ steps.lint.conclusion }}" = "success" ]; then LINT_STATUS="PASS"; else LINT_STATUS="FAIL"; fi
 
-          echo -e "\n=== RUNNING LINTER ===" >> check_output.md
-          ansible-lint playbooks/site.yaml playbooks/bootstrap.yaml >> check_output.md 2>&1
-          LINT_RC=$?
+          cat > check_output.md <<'REPORT'
+          <!-- Ansible Lint & Syntax Report -->
 
-          echo "\`\`\`" >> check_output.md
+          ## Ansible Verify Report
+          REPORT
 
-          if [ $SYNTAX_RC -eq 0 ] && [ $LINT_RC -eq 0 ]; then
-            echo -e "\n### Validation Passed!" >> check_output.md
-            echo "status=success" >> $GITHUB_OUTPUT
+          {
+            echo '```text'
+            cowsay "Syntax: ${SYNTAX_STATUS} | Lint: ${LINT_STATUS}"
+            echo '```'
+            echo ''
+          } >> check_output.md
+
+          if [ "$SYNTAX_STATUS" = "FAIL" ] || [ "$LINT_STATUS" = "FAIL" ]; then
+            echo '**Result: FAILED**' >> check_output.md
           else
-            echo -e "\n### Validation Failed! Please resolve the errors printed above." >> check_output.md
-            echo "status=failure" >> $GITHUB_OUTPUT
+            echo '**Result: PASSED**' >> check_output.md
           fi
+
+          {
+            echo ''
+            echo '<details><summary>Syntax Check Output</summary>'
+            echo ''
+            echo '```text'
+            cat syntax_output.txt
+            echo '```'
+            echo '</details>'
+            echo ''
+            echo '<details><summary>Lint Output</summary>'
+            echo ''
+            echo '```text'
+            cat lint_output.txt
+            echo '```'
+            echo '</details>'
+          } >> check_output.md
+
+          echo ''
+          cat check_output.md
 
       - name: Create or Update PR Comment
         uses: peter-evans/create-or-update-comment@v4
@@ -80,7 +161,7 @@ jobs:
           edit-mode: replace
 
       - name: Enforce Check Failure
-        if: steps.ansible_check.outputs.status == 'failure'
+        if: needs.syntax.result != 'success' || steps.lint.conclusion == 'failure'
         run: |
           echo "Ansible checks failed. Check the generated PR comment for details."
           exit 1

@@ -1,4 +1,7 @@
 - name: Cleanup teardown host
+  delegate_to: "{{ _other }}"
+  become: true
+  failed_when: false
   block:
     - name: Stop and remove containers on {{ _other }}
       community.docker.docker_compose_v2:
@@ -11,6 +14,3 @@
       ansible.builtin.file:
         path: "{{ _dest_dir }}/docker-compose.yaml"
         state: absent
-  delegate_to: "{{ _other }}"
-  become: true
-  ignore_errors: true
