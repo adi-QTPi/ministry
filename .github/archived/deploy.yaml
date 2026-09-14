@@ -1,3 +1,5 @@
+# DEPRECATED: replaced by ansible deploy_services role.
+# Archived 2026-09-14. Do not re-enable. Left for reference.
 name: Azkaban
 
 on:
