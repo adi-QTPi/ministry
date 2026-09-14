@@ -22,6 +22,10 @@ caddy_proxy_services:
     port: 3001
     host: "{{ rubie }}"
 
+  - subdomain: pdf
+    port: 8083
+    host: "{{ rubie }}"
+
   - subdomain: moody
     port: 8096
     host: "{{ raj }}"

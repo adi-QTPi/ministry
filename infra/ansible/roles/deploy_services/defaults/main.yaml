@@ -1,3 +1,4 @@
 ---
 service_manifests_dir: ""
 service_base_dir: /services
+service_target_hosts: []

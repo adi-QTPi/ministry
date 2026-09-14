@@ -49,6 +49,6 @@
         tailscale_authkey: "{{ tailscale_oauth_key }}"
         tailscale_tags:
           - "server"
-        tailscale_oauth_ephemeral: true
+        tailscale_oauth_ephemeral: false
         tailscale_oauth_preauthorized: true
-        tailscale_args: "--hostname={{ inventory_hostname }} --ssh"
+        tailscale_args: "--reset --hostname={{ inventory_hostname }} --ssh"

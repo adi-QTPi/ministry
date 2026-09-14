@@ -55,6 +55,9 @@
   tags: [docker]
   vars:
     service_manifests_dir: "{{ playbook_dir }}/../../../docker_services"
+    service_target_hosts:
+      - rubie
+      - raj
   roles:
     - role: deploy_services
 
