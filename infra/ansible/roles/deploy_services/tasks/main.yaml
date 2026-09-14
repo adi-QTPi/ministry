@@ -1,0 +1,13 @@
+---
+- name: Discover service directories
+  ansible.builtin.find:
+    paths: "{{ service_manifests_dir }}"
+    file_type: directory
+    recurse: false
+  register: _service_dirs
+
+- name: Deploy each discovered service
+  ansible.builtin.include_tasks: deploy_one.yaml
+  loop: "{{ _service_dirs.files }}"
+  loop_control:
+    loop_var: _svc

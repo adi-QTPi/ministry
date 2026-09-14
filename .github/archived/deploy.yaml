@@ -1,0 +1,84 @@
+# DEPRECATED: replaced by ansible deploy_services role.
+# Archived 2026-09-14. Do not re-enable. Left for reference.
+name: Azkaban
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+    inputs:
+      force_project:
+        description: 'Force deploy specific project'
+        required: true
+        default: 'thestral'
+        type: choice
+        options:
+        - thestral
+        - portfolio_march
+        - gringotts
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      projects: ${{ steps.decide.outputs.result }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          base: ${{ github.ref }}
+          list-files: json
+          # Define projects and their triggers here
+          filters: |
+            thestral:
+              - 'docker/services/thestral/**'
+            portfolio:
+              - 'docker/services/portfolio_march/**'
+            gringotts:
+              - 'docker/services/gringotts/**'
+      - name: Decide Projects
+        id: decide
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo 'result=["${{ inputs.force_project }}"]' >> $GITHUB_OUTPUT
+          else
+            echo 'result=${{ steps.filter.outputs.changes }}' >> $GITHUB_OUTPUT
+          fi
+
+  deploy:
+    needs: detect
+    if: ${{ needs.detect.outputs.projects != '[]' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project: ${{ fromJSON(needs.detect.outputs.projects) }}
+      fail-fast: false
+      
+    steps:
+      - uses: actions/checkout@v4
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:cd
+
+      - name: Prepare Server Directory
+        run: |
+          ssh -o StrictHostKeyChecking=no prod@${{ secrets.TAILSCALE_IP }} "mkdir -p /opt/services/${{ matrix.project }}"
+
+      - name: Copy docker-compose
+        run: |
+          scp -o StrictHostKeyChecking=no \
+            ./docker/services/${{ matrix.project }}/docker-compose.yaml \
+            prod@${{ secrets.TAILSCALE_IP }}:/opt/services/${{ matrix.project }}/
+
+      - name: Compose Up
+        run: |
+          ssh -o StrictHostKeyChecking=no prod@${{ secrets.TAILSCALE_IP }} "
+            cd /opt/services/${{ matrix.project }}
+            docker compose pull
+            docker compose up -d --remove-orphans
+            docker image prune -f
+          "

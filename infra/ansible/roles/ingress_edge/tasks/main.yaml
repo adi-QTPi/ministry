@@ -1,0 +1,6 @@
+---
+- name: Configure tailscale exit node
+  ansible.builtin.include_tasks: tailscale.yaml
+
+- name: Configure reverse proxy
+  ansible.builtin.include_tasks: proxy.yaml

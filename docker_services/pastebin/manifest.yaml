@@ -1,0 +1,7 @@
+---
+name: pastebin
+host: rubie 
+compose_file: docker-compose.yaml
+vault_file: vault.yaml
+secrets:
+  admin_password: vault_microbin_admin_pass

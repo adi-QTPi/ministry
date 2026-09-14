@@ -5,16 +5,22 @@ set ignore-comments := true
 default:
     @just --list
 
-ping target="all" user="ansible":
-    ansible {{target}} -i ./inventory/hosts.yaml -m ping -u {{user}}
+ping target="all" user="ansible" *flags:
+    ansible {{target}} -i ./inventory/hosts.yaml -m ping -u {{user}} {{flags}}
 
 # Bootstrap a node. Pass '-K' to prompt for sudo password if needed.
-bootstrap user="ansible" *flags:
-    ansible-playbook ./playbooks/bootstrap.yaml -u {{user}} {{flags}}
+# Usage: just bootstrap <target> <user> -- -K
+bootstrap target user="ansible" *flags:
+    ansible-playbook ./playbooks/bootstrap.yaml -u {{user}} -e bootstrap_target={{target}} {{flags}}
 
 # Vault actions like view, edit, create etc.
 vault action="edit" location="./inventory/group_vars/all/vault.yaml":
     ansible-vault {{action}} {{location}}
+
+# Encrypt single string and append inline to a vault file.
+# Usage: just vault-secret name=MY_SECRET value="my-password" location=./services/pastebin/vault.yaml
+inline-vault name value location *flags:
+    ansible-vault encrypt_string --vault-password-file .vault_pass --encrypt-vault-id default --name '{{name}}' '{{value}}' {{flags}} | yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' {{location}} - -i
 
 # perform actions related to roles, create, list etc.
 role action="info" role="":
