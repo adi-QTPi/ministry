@@ -1,0 +1,14 @@
+#!/bin/sh
+FILE="dotfiles/README.md"
+
+if git diff --cached --name-only --diff-filter=ACMR | grep -qx "$FILE"; then
+    NOW=$(date -u +"%Y-%m-%d %H:%M UTC")
+    tmp=$(mktemp)
+    awk -v now="$NOW" '
+        /^## Last updated$/ { insec=1 }
+        insec && /^- Date:/ { print "- Date: " now; next }
+        { print }
+    ' "$FILE" > "$tmp"
+    mv "$tmp" "$FILE"
+    git add "$FILE"
+fi

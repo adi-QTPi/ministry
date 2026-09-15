@@ -1,0 +1,15 @@
+---
+galaxy_info:
+  role_name: chezmoi
+  author: karma
+  description: Install chezmoi and shell tooling, then apply dotfiles.
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+    - name: Ubuntu
+  galaxy_tags:
+    - chezmoi
+    - dotfiles
+    - shell
+dependencies: []

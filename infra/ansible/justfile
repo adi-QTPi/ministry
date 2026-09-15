@@ -33,3 +33,7 @@ install *flags:
 # run a playbook (name without extension) in the playbooks folder, eg: just play site
 play playbook="site" *flags:
 	ansible-playbook ./playbooks/{{playbook}}.yaml {{flags}}
+
+# install chezmoi, shell tooling, and apply dotfiles on a target
+dotfiles target="all" *flags:
+	ansible-playbook ./playbooks/chezmoi.yaml -e target={{target}} {{flags}}

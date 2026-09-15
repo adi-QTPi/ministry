@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+GIT_DIR="{{ chezmoi_git_dir }}"
+SOURCE_DIR="{{ chezmoi_source_dir }}"
+CHEZMOI_BIN="{{ chezmoi_bin }}"
+REPO="{{ chezmoi_repo }}"
+BRANCH="{{ chezmoi_repo_branch }}"
+REPO_DIR="{{ chezmoi_repo_dir }}"
+
+if [ -d "${GIT_DIR}/.git" ]; then
+  if [ -n "${REPO_DIR}" ]; then
+    git -C "${GIT_DIR}" sparse-checkout set "${REPO_DIR}"
+  fi
+  git -C "${GIT_DIR}" checkout "${BRANCH}"
+  git -C "${GIT_DIR}" pull --rebase --depth 1
+else
+  git clone --depth 1 --filter=blob:none --sparse --single-branch --branch "${BRANCH}" "${REPO}" "${GIT_DIR}"
+  if [ -n "${REPO_DIR}" ]; then
+    git -C "${GIT_DIR}" sparse-checkout set "${REPO_DIR}"
+  fi
+fi
+
+if [ ! -d "${SOURCE_DIR}" ]; then
+  echo "chezmoi source dir not found: ${SOURCE_DIR}" >&2
+  exit 1
+fi
+
+cd /tmp
+
+getent passwd \
+  | awk -F: '$3 == 0 || ($3 >= 1000 && $3 < 65534 && $7 !~ /(nologin|false)$/)' \
+  | awk -F: '{print $1 ":" $6}' \
+  | while IFS=: read -r user home; do
+      [ -n "${home}" ] && [ "${home}" != "/" ] || continue
+      runuser -u "${user}" -- env HOME="${home}" "${CHEZMOI_BIN}" apply --force --source "${SOURCE_DIR}" --destination "${home}"
+    done
