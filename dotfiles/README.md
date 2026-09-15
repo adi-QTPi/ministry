@@ -1,6 +1,6 @@
 # Dotfiles
 
->Basically I ditched nix (reasons : [put archive folder readme link]), but wanted a dependable alternative.
+>Basically I ditched nix (reasons: [archive/nix/README.md](../archive/nix/README.md)), but wanted a dependable alternative.
 
 Single source of truth for shell, editor, and terminal configs. Managed by [chezmoi](https://www.chezmoi.io/), applied machine-wide via Ansible, and kept in sync by cron.
 
@@ -22,8 +22,7 @@ The dotfiles themselves are cross-platform: `dot_zshrc` (and its aliases) is wri
 
 `infra/ansible/playbooks/chezmoi.yaml` runs the `chezmoi` role. The install step reads `shell-packages.yaml` and installs:
 
-- `apt`: git, zsh, zoxide, direnv, neovim, alacritty, unzip, rsync
-- `downloaded binaries`: eza, curlie, starship, terraform, kubectl
+- everything listed in `shell-packages.yaml` (apt packages + downloaded binaries)
 - chezmoi itself
 
 ### Sync - Ansible once, then cron
@@ -58,7 +57,7 @@ Packages install only when the playbook runs. Cron syncs dotfiles only, never pa
 
 ## Last updated
 
-- Date: 2026-09-15 10:19 UTC
-- Previous commit: [543b466](https://github.com/adi-QTPi/ministry/commit/543b466)
+- Date: 2026-09-15 11:38 UTC
+- Previous commit: [7a85087](https://github.com/adi-QTPi/ministry/commit/7a85087)
 
 _Date and commit hash are auto-generated. Commit hash is of the commit previous to the commit which modified this README._

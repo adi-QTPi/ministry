@@ -1,14 +1,23 @@
 #!/bin/sh
-FILE="dotfiles/README.md"
+REPO_URL="https://github.com/adi-QTPi/ministry/commit"
+NOW=$(date -u +"%Y-%m-%d %H:%M UTC")
+PREV=$(git rev-parse --short HEAD)
 
-if git diff --cached --name-only --diff-filter=ACMR | grep -qx "$FILE"; then
-    NOW=$(date -u +"%Y-%m-%d %H:%M UTC")
-    tmp=$(mktemp)
-    awk -v now="$NOW" '
-        /^## Last updated$/ { insec=1 }
-        insec && /^- Date:/ { print "- Date: " now; next }
-        { print }
-    ' "$FILE" > "$tmp"
-    mv "$tmp" "$FILE"
+FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -iE '(^|/)readme\.md$')
+
+for FILE in $FILES; do
+    if grep -q '^## Last updated$' "$FILE"; then
+        tmp=$(mktemp)
+        awk -v now="$NOW" -v prev="$PREV" -v url="$REPO_URL" '
+            /^## Last updated$/ { insec=1 }
+            insec && /^- Date:/ { print "- Date: " now; next }
+            insec && /^- Previous commit:/ { print "- Previous commit: [" prev "](" url "/" prev ")"; next }
+            { print }
+        ' "$FILE" > "$tmp"
+        mv "$tmp" "$FILE"
+    else
+        printf '\n## Last updated\n\n- Date: %s\n- Previous commit: [%s](%s/%s)\n\n_Date and commit hash are auto-generated. Commit hash is of the commit previous to the commit which modified this README._\n' \
+            "$NOW" "$PREV" "$REPO_URL" "$PREV" >> "$FILE"
+    fi
     git add "$FILE"
-fi
+done

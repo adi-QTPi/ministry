@@ -14,8 +14,6 @@ apt_packages:
   - fd-find
   - ripgrep
   - duf
-  - du-dust
-  - doggo
 
 linux_archive_binaries:
   - name: eza
