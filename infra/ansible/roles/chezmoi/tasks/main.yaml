@@ -4,9 +4,11 @@
   block:
     - name: Install shell tooling
       ansible.builtin.include_tasks: install.yaml
+      tags: [install]
 
 - name: Apply dotfiles machine-wide
   become: true
   block:
     - name: Apply dotfiles via chezmoi
       ansible.builtin.include_tasks: apply.yaml
+      tags: [apply]

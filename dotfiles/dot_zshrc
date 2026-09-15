@@ -30,6 +30,14 @@ alias ls="eza --icons --group-directories-first"
 alias curl="curlie"
 alias tf="terraform"
 alias k="kubectl"
+alias find="fdfind"
+alias grep="rg"
+alias df="duf"
+alias du="dust"
+alias dig="doggo"
+alias cp="rsync -ah --info=progress2"
+alias mv="rsync -ah --info=progress2 --remove-source-files"
+alias scp="rsync -avzP"
 
 # OS-specific dotfiles sync
 if [[ "$OSTYPE" == "darwin"* ]]; then

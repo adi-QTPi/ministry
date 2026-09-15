@@ -5,7 +5,7 @@
   roles:
     - role: chezmoi
       vars:
-        shell_packages_manifest: "{{ playbook_dir }}/../../../dotfiles/.shell-packages.yaml"
+        shell_packages_manifest: "{{ playbook_dir }}/../../../dotfiles/shell-packages.yaml"
         chezmoi_repo: "https://github.com/adi-QTPi/ministry.git"
         chezmoi_repo_branch: "karma/dotfiles-setup"
         chezmoi_repo_dir: "dotfiles"

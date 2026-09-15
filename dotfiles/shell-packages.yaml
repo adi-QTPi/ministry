@@ -1,6 +1,6 @@
 ---
 # Linux shell packages required by the dotfiles (zshrc aliases + integrations).
-# Hidden dot-prefixed name so chezmoi ignores it; consumed by the ansible chezmoi role.
+# Consumed by the ansible chezmoi role; listed in .chezmoiignore so chezmoi skips it.
 apt_packages:
   - git
   - zsh
@@ -9,6 +9,13 @@ apt_packages:
   - neovim
   - alacritty
   - unzip
+  - rsync
+  - fzf
+  - fd-find
+  - ripgrep
+  - duf
+  - du-dust
+  - doggo
 
 linux_archive_binaries:
   - name: eza

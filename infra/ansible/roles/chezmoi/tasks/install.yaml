@@ -7,20 +7,21 @@
   ansible.builtin.apt:
     name: "{{ apt_packages }}"
     state: present
-    update_cache: true
+    cache_valid_time: 3600
 
 - name: Download chezmoi
   ansible.builtin.get_url:
     url: "https://github.com/twpayne/chezmoi/releases/download/v{{ chezmoi_version }}/chezmoi_{{ chezmoi_version }}_linux_{{ go_arch }}.tar.gz"
     dest: /tmp
     mode: "0644"
-    force: true
+    force: false
 
 - name: Extract chezmoi
   ansible.builtin.unarchive:
     src: "/tmp/chezmoi_{{ chezmoi_version }}_linux_{{ go_arch }}.tar.gz"
     dest: "{{ chezmoi_install_dir }}"
     remote_src: true
+    creates: "{{ chezmoi_bin }}"
 
 - name: Ensure chezmoi executable
   ansible.builtin.file:
@@ -33,7 +34,7 @@
     url: "{{ item.url }}"
     dest: /tmp
     mode: "0644"
-    force: true
+    force: false
   loop: "{{ linux_archive_binaries }}"
 
 - name: Extract Linux archive binaries
@@ -41,6 +42,7 @@
     src: "/tmp/{{ item.url | basename }}"
     dest: "{{ chezmoi_install_dir }}"
     remote_src: true
+    creates: "{{ chezmoi_install_dir }}/{{ item.name }}"
   loop: "{{ linux_archive_binaries }}"
 
 - name: Install Linux raw binaries
@@ -48,7 +50,7 @@
     url: "{{ item.url }}"
     dest: "{{ chezmoi_install_dir }}/{{ item.name }}"
     mode: "0755"
-    force: true
+    force: false
   loop: "{{ linux_raw_binaries }}"
 
 - name: Ensure Linux binaries executable

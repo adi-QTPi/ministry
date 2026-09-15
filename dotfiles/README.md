@@ -1,6 +1,10 @@
 # Dotfiles
 
+>Basically I ditched nix (reasons : [put archive folder readme link]), but wanted a dependable alternative.
+
 Single source of truth for shell, editor, and terminal configs. Managed by [chezmoi](https://www.chezmoi.io/), applied machine-wide via Ansible, and kept in sync by cron.
+
+The dotfiles themselves are cross-platform: `dot_zshrc` (and its aliases) is written to work on both macOS and Linux servers, so the same config applies to a Mac. The Ansible package management, however, is Linux-only - it exists to prime the servers and is not meant to run on macOS. On a Mac, use `chezmoi update --force` (the `dotsync` alias) to pull the same dotfiles without Ansible.
 
 ## Layout
 
@@ -8,7 +12,7 @@ Single source of truth for shell, editor, and terminal configs. Managed by [chez
 - `dot_config/nvim/init.lua` -> `~/.config/nvim/init.lua`
 - `dot_config/alacritty/alacritty.toml` -> `~/.config/alacritty/alacritty.toml`
 - `dot_config/starship.toml.tmpl` -> `~/.config/starship.toml`
-- `.shell-packages.yaml` -> package manifest (chezmoi ignores dot-prefixed files)
+- `shell-packages.yaml` -> package manifest (kept out of chezmoi via `.chezmoiignore`)
 - `.chezmoiignore` -> keeps `README.md` out of chezmoi's target set
 - `README.md` -> this file
 
@@ -16,9 +20,9 @@ Single source of truth for shell, editor, and terminal configs. Managed by [chez
 
 ### Install - Ansible only
 
-`infra/ansible/playbooks/chezmoi.yaml` runs the `chezmoi` role. The install step reads `.shell-packages.yaml` and installs:
+`infra/ansible/playbooks/chezmoi.yaml` runs the `chezmoi` role. The install step reads `shell-packages.yaml` and installs:
 
-- `apt`: git, zsh, zoxide, direnv, neovim, alacritty, unzip
+- `apt`: git, zsh, zoxide, direnv, neovim, alacritty, unzip, rsync
 - `downloaded binaries`: eza, curlie, starship, terraform, kubectl
 - chezmoi itself
 
@@ -54,7 +58,7 @@ Packages install only when the playbook runs. Cron syncs dotfiles only, never pa
 
 ## Last updated
 
-- Date: 2026-09-15 04:36 UTC
-- Commit: [543b466](https://github.com/adi-QTPi/ministry/commit/543b466)
+- Date: 2026-09-15 10:19 UTC
+- Previous commit: [543b466](https://github.com/adi-QTPi/ministry/commit/543b466)
 
 _Date and commit hash are auto-generated. Commit hash is of the commit previous to the commit which modified this README._
