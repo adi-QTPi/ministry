@@ -115,6 +115,7 @@
         for f in /etc/bash.bashrc /etc/bashrc /etc/zshrc /etc/profile /etc/fish/config.fish; do
           [ -f "$f" ] || continue
           sed -i '/^# Nix$/,/^# End Nix$/d' "$f"
+          sed -i '/^# Nix & Home Manager Priority/,/^fi$/d' "$f"
           sed -i -E '/(nix-profile|nix-daemon|nix\.sh|NIX_PATH|nix-env|nix-defexpr|nix-channels|\/nix\/)/d' "$f"
         done
       changed_when: false
@@ -126,6 +127,7 @@
             file="$home/$f"
             [ -f "$file" ] || continue
             sed -i '/^# Nix$/,/^# End Nix$/d' "$file"
+            sed -i '/^# Nix & Home Manager Priority/,/^fi$/d' "$file"
             sed -i -E '/(nix-profile|nix-daemon|nix\.sh|NIX_PATH|nix-env|nix-defexpr|nix-channels|\/nix\/)/d' "$file"
           done
         done

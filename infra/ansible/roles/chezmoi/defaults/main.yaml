@@ -1,0 +1,20 @@
+---
+chezmoi_version: "2.72.2"
+chezmoi_install_dir: /usr/local/bin
+chezmoi_bin: "{{ chezmoi_install_dir }}/chezmoi"
+
+chezmoi_repo: ""
+chezmoi_repo_branch: "main"
+chezmoi_repo_dir: ""
+chezmoi_git_dir: /opt/chezmoi
+chezmoi_source_dir: "{{ chezmoi_git_dir ~ ('/' ~ chezmoi_repo_dir if chezmoi_repo_dir else '') }}"
+
+chezmoi_sync_bin: /usr/local/bin/chezmoi-sync
+chezmoi_sync_minute: "*/30"
+
+# dotfiles/ lives at repo root; playbook_dir resolves to playbooks/, hence ../../..
+dotfiles_local_dir: "{{ playbook_dir }}/../../../dotfiles"
+shell_packages_manifest: "{{ dotfiles_local_dir }}/shell-packages.yaml"
+
+go_arch: "{{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}"
+rust_arch: "{{ 'aarch64' if ansible_architecture == 'aarch64' else 'x86_64' }}"

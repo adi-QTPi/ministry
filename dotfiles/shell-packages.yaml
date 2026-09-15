@@ -1,0 +1,30 @@
+---
+# Linux shell packages required by the dotfiles (zshrc aliases + integrations).
+# Consumed by the ansible chezmoi role; listed in .chezmoiignore so chezmoi skips it.
+apt_packages:
+  - git
+  - zsh
+  - zoxide
+  - direnv
+  - neovim
+  - alacritty
+  - unzip
+  - rsync
+  - fzf
+  - fd-find
+  - ripgrep
+  - duf
+
+linux_archive_binaries:
+  - name: eza
+    url: "https://github.com/eza-community/eza/releases/download/v0.23.5/eza_{{ rust_arch }}-unknown-linux-gnu.tar.gz"
+  - name: curlie
+    url: "https://github.com/rs/curlie/releases/download/v1.8.2/curlie_1.8.2_linux_{{ go_arch }}.tar.gz"
+  - name: starship
+    url: "https://github.com/starship/starship/releases/download/v1.26.0/starship-{{ rust_arch }}-unknown-linux-gnu.tar.gz"
+  - name: terraform
+    url: "https://releases.hashicorp.com/terraform/1.16.2/terraform_1.16.2_linux_{{ go_arch }}.zip"
+
+linux_raw_binaries:
+  - name: kubectl
+    url: "https://dl.k8s.io/release/v1.37.0/bin/linux/{{ go_arch }}/kubectl"

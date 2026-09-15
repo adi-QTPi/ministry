@@ -1,0 +1,48 @@
+---
+- name: Ensure chezmoi repo is configured
+  ansible.builtin.assert:
+    that:
+      - chezmoi_repo | length > 0
+    fail_msg: "chezmoi_repo must be set in the playbook"
+
+- name: Validate chezmoi repo and branch
+  ansible.builtin.command:
+    cmd: "timeout 30 git ls-remote --exit-code --heads {{ chezmoi_repo }} refs/heads/{{ chezmoi_repo_branch }}"
+  environment:
+    GIT_TERMINAL_PROMPT: "0"
+  changed_when: false
+
+- name: Deploy chezmoi sync script
+  ansible.builtin.template:
+    src: chezmoi-sync.sh.j2
+    dest: "{{ chezmoi_sync_bin }}"
+    mode: "0755"
+
+- name: Sync and apply dotfiles
+  ansible.builtin.command: "{{ chezmoi_sync_bin }}"
+  changed_when: false
+
+- name: Find zsh binary
+  ansible.builtin.command: which zsh
+  register: _zsh_bin
+  changed_when: false
+
+- name: Gather system users
+  ansible.builtin.getent:
+    database: passwd
+
+- name: Set zsh as default shell for eligible users
+  ansible.builtin.user:
+    name: "{{ item.key }}"
+    shell: "{{ _zsh_bin.stdout }}"
+  loop: "{{ getent_passwd | dict2items }}"
+  when:
+    - "(item.value[1] | int == 0) or (item.value[1] | int >= 1000 and item.value[1] | int < 65534)"
+    - "item.value[5] is not search('(nologin|false)$')"
+
+- name: Install chezmoi sync cron job
+  ansible.builtin.cron:
+    name: chezmoi-sync
+    user: root
+    minute: "{{ chezmoi_sync_minute }}"
+    job: "{{ chezmoi_sync_bin }}"

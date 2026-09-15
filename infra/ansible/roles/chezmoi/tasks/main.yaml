@@ -1,0 +1,14 @@
+---
+- name: Install chezmoi and shell packages
+  become: true
+  block:
+    - name: Install shell tooling
+      ansible.builtin.import_tasks: install.yaml
+      tags: [install]
+
+- name: Apply dotfiles machine-wide
+  become: true
+  block:
+    - name: Apply dotfiles via chezmoi
+      ansible.builtin.import_tasks: apply.yaml
+      tags: [apply]
