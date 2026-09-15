@@ -3,6 +3,27 @@ export LANG="C.UTF-8"
 export LC_ALL="C.UTF-8"
 export EDITOR="nvim"
 
+# Helper Function
+add_to_path() {
+    [[ -d "$1" && ":$PATH:" != *":$1:"* ]] && export PATH="$1:$PATH"
+}
+
+# 1. Base OS Paths First
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    add_to_path "/opt/homebrew/bin"
+    add_to_path "/opt/homebrew/sbin"
+    add_to_path "/usr/local/bin"
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    add_to_path "$HOME/.local/bin"
+    add_to_path "/usr/local/bin"
+fi
+
+# 2. Package Managers & Language Runtimes
+add_to_path "$HOME/.npm-global/bin"
+add_to_path "$HOME/go/bin"
+add_to_path "/usr/local/go/bin"
+add_to_path "$HOME/.cargo/bin"
+
 # Shell Aliases
 alias cd="z"
 alias ls="eza --icons --group-directories-first"
