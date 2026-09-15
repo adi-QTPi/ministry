@@ -7,6 +7,6 @@
       vars:
         shell_packages_manifest: "{{ playbook_dir }}/../../../dotfiles/shell-packages.yaml"
         chezmoi_repo: "https://github.com/adi-QTPi/ministry.git"
-        chezmoi_repo_branch: "karma/dotfiles-setup"
+        chezmoi_repo_branch: "main"
         chezmoi_repo_dir: "dotfiles"
         chezmoi_sync_minute: "*/30"
