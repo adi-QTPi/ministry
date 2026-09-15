@@ -12,8 +12,8 @@ if [ -d "${GIT_DIR}/.git" ]; then
   if [ -n "${REPO_DIR}" ]; then
     git -C "${GIT_DIR}" sparse-checkout set "${REPO_DIR}"
   fi
-  git -C "${GIT_DIR}" checkout "${BRANCH}"
-  git -C "${GIT_DIR}" pull --rebase --depth 1
+  git -C "${GIT_DIR}" fetch --depth 1 origin "${BRANCH}"
+  git -C "${GIT_DIR}" reset --hard "origin/${BRANCH}"
 else
   git clone --depth 1 --filter=blob:none --sparse --single-branch --branch "${BRANCH}" "${REPO}" "${GIT_DIR}"
   if [ -n "${REPO_DIR}" ]; then

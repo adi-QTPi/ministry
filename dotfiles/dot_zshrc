@@ -31,6 +31,13 @@ alias curl="curlie"
 alias tf="terraform"
 alias k="kubectl"
 
+# OS-specific dotfiles sync
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    alias dotsync="chezmoi update --force"
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    alias dotsync="sudo /usr/local/bin/chezmoi-sync"
+fi
+
 # Vi-mode & Keybindings
 bindkey -v
 bindkey -M viins 'jk' vi-cmd-mode
