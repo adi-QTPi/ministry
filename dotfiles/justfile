@@ -1,0 +1,28 @@
+set ignore-comments := true
+
+default:
+    @just --list
+
+# Apply this working tree's dotfiles into a throwaway HOME and open a test zsh.
+# Uses uncommitted changes, so no push to main needed. Pass keep_antidote=false to test a fresh antidote clone.
+# Pass keep_history=false to start with empty zsh history.
+test keep_antidote="true" keep_history="true":
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    src="{{ justfile_directory() }}"
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"' EXIT
+
+    if [[ "{{ keep_antidote }}" == "true" && -d "$HOME/.antidote" ]]; then
+      cp -R "$HOME/.antidote" "$tmp/.antidote"
+    fi
+
+    if [[ "{{ keep_history }}" == "true" && -f "$HOME/.zsh_history" ]]; then
+      cp "$HOME/.zsh_history" "$tmp/.zsh_history"
+    fi
+
+    env XDG_CONFIG_HOME="$tmp/.config" XDG_DATA_HOME="$tmp/.local/share" \
+      chezmoi apply --source "$src" --destination "$tmp" --force
+
+    env HOME="$tmp" ZDOTDIR="$tmp" zsh -i

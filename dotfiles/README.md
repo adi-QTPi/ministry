@@ -9,6 +9,7 @@ The dotfiles themselves are cross-platform: `dot_zshrc` (and its aliases) is wri
 ## Layout
 
 - `dot_zshrc` -> `~/.zshrc`
+- `dot_zsh_plugins.txt` -> `~/.zsh_plugins.txt`
 - `dot_config/nvim/init.lua` -> `~/.config/nvim/init.lua`
 - `dot_config/alacritty/alacritty.toml` -> `~/.config/alacritty/alacritty.toml`
 - `dot_config/starship.toml.tmpl` -> `~/.config/starship.toml`
@@ -16,13 +17,17 @@ The dotfiles themselves are cross-platform: `dot_zshrc` (and its aliases) is wri
 - `.chezmoiignore` -> keeps `README.md` out of chezmoi's target set
 - `README.md` -> this file
 
+## Plugins
+
+Zsh plugins are loaded by [antidote](https://antidote.sh/), a pure-zsh plugin manager. `dot_zshrc` clones antidote into `~/.antidote` on first login, then loads `~/.zsh_plugins.txt`, so there is nothing to install separately. Add new plugins to `dot_zsh_plugins.txt`; order matters, `compinit` runs first.
+
 ## Flow
 
 ### Install - Ansible only
 
 `infra/ansible/playbooks/chezmoi.yaml` runs the `chezmoi` role. The install step reads `shell-packages.yaml` and installs:
 
-- everything listed in `shell-packages.yaml` (apt packages + downloaded binaries)
+- everything listed in `shell-packages.yaml` (apt packages + official install scripts)
 - chezmoi itself
 
 ### Sync - Ansible once, then cron
@@ -57,7 +62,7 @@ Packages install only when the playbook runs. Cron syncs dotfiles only, never pa
 
 ## Last updated
 
-- Date: 2026-09-15 11:38 UTC
-- Previous commit: [7a85087](https://github.com/adi-QTPi/ministry/commit/7a85087)
+- Date: 2026-09-17 02:18 UTC
+- Previous commit: [5f9ca77](https://github.com/adi-QTPi/ministry/commit/5f9ca77)
 
 _Date and commit hash are auto-generated. Commit hash is of the commit previous to the commit which modified this README._

@@ -3,6 +3,50 @@
   ansible.builtin.include_vars:
     file: "{{ shell_packages_manifest }}"
 
+- name: Install bootstrap packages for third-party repos
+  ansible.builtin.apt:
+    name:
+      - gnupg
+      - curl
+      - apt-transport-https
+      - ca-certificates
+    state: present
+    cache_valid_time: 3600
+
+- name: Ensure apt keyrings directory exists
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+
+- name: Download third-party apt repository keys
+  ansible.builtin.get_url:
+    url: "{{ item.key_url }}"
+    dest: "/tmp/{{ item.name }}-release.key"
+    mode: "0644"
+  loop: "{{ apt_repositories }}"
+
+- name: Dearmor third-party apt repository keys
+  ansible.builtin.command:
+    cmd: "gpg --dearmor --yes -o {{ item.keyring }} /tmp/{{ item.name }}-release.key"
+    creates: "{{ item.keyring }}"
+  loop: "{{ apt_repositories }}"
+
+- name: Ensure third-party apt keyring permissions
+  ansible.builtin.file:
+    path: "{{ item.keyring }}"
+    mode: "0644"
+    state: file
+  loop: "{{ apt_repositories }}"
+
+- name: Add third-party apt repositories
+  ansible.builtin.apt_repository:
+    repo: "{{ item.repo }}"
+    filename: "{{ item.name }}"
+    state: present
+    update_cache: true
+  loop: "{{ apt_repositories }}"
+
 - name: Install shell packages via apt
   ansible.builtin.apt:
     name: "{{ apt_packages }}"
@@ -29,33 +73,14 @@
     mode: "0755"
     state: file
 
-- name: Download Linux archive binaries
+- name: Download official install scripts
   ansible.builtin.get_url:
     url: "{{ item.url }}"
-    dest: /tmp
-    mode: "0644"
-    force: false
-  loop: "{{ linux_archive_binaries }}"
-
-- name: Extract Linux archive binaries
-  ansible.builtin.unarchive:
-    src: "/tmp/{{ item.url | basename }}"
-    dest: "{{ chezmoi_install_dir }}"
-    remote_src: true
-    creates: "{{ chezmoi_install_dir }}/{{ item.name }}"
-  loop: "{{ linux_archive_binaries }}"
-
-- name: Install Linux raw binaries
-  ansible.builtin.get_url:
-    url: "{{ item.url }}"
-    dest: "{{ chezmoi_install_dir }}/{{ item.name }}"
+    dest: "/tmp/{{ item.name }}-install.sh"
     mode: "0755"
-    force: false
-  loop: "{{ linux_raw_binaries }}"
+  loop: "{{ install_scripts }}"
 
-- name: Ensure Linux binaries executable
-  ansible.builtin.file:
-    path: "{{ chezmoi_install_dir }}/{{ item.name }}"
-    mode: "0755"
-    state: file
-  loop: "{{ linux_archive_binaries }}"
+- name: Run official install scripts
+  ansible.builtin.command:
+    cmd: "sh /tmp/{{ item.name }}-install.sh {{ item.args | default('') }}"
+  loop: "{{ install_scripts }}"

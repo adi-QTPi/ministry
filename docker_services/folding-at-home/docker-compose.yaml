@@ -1,0 +1,21 @@
+services:
+  foldingathome:
+    image: lscr.io/linuxserver/foldingathome:latest
+    container_name: fah-client
+    restart: unless-stopped
+    environment:
+      - PUID=1023
+      - PGID=1023
+      - TZ=Asia/Kolkata
+      - ACCOUNT_TOKEN=<your-fah-account-token>
+      - MACHINE_NAME=host
+    volumes:
+      - ./fah-data:/config:Z
+    ports:
+      - 7396:7396 # This opens the web GUI
+    deploy:
+      resources:
+        # important
+        limits:
+          cpus: '0.50'
+          memory: 3400M

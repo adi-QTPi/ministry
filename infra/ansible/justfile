@@ -35,6 +35,6 @@ play playbook="site" *flags:
 	ansible-playbook ./playbooks/{{playbook}}.yaml {{flags}}
 
 # install chezmoi, shell tooling, and apply dotfiles on a target
-# tag: ansible tag, defaults to apply (quick dotfiles sync), eg: just dotfiles tag=install
-dotfiles target="all" tag="apply" *flags:
-	ansible-playbook ./playbooks/chezmoi.yaml -e target={{target}} --tags {{tag}} {{flags}}
+# runs whole playbook (install + apply) by default; pass tag=install or tag=apply to limit scope
+dotfiles target="all" tag="" *flags:
+	ansible-playbook ./playbooks/chezmoi.yaml -e target={{target}} {{ if tag != "" { "--tags " + tag } else { "" } }} {{flags}}

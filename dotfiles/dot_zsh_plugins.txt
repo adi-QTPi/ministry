@@ -1,0 +1,7 @@
+# Zsh plugins, loaded by antidote. Order matters.
+# fzf-tab: replaces Tab completion menu with fzf. Needs the fzf binary installed.
+# Must load after compinit and before zsh-autosuggestions.
+Aloxaf/fzf-tab
+
+# zsh-autosuggestions: fish-like inline suggestions from history.
+zsh-users/zsh-autosuggestions
