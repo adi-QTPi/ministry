@@ -40,6 +40,18 @@
     - "(item.value[1] | int == 0) or (item.value[1] | int >= 1000 and item.value[1] | int < 65534)"
     - "item.value[5] is not search('(nologin|false)$')"
 
+- name: Install cron package
+  ansible.builtin.apt:
+    name: cron
+    state: present
+    cache_valid_time: 3600
+
+- name: Ensure cron service is enabled and running
+  ansible.builtin.service:
+    name: cron
+    state: started
+    enabled: true
+
 - name: Install chezmoi sync cron job
   ansible.builtin.cron:
     name: chezmoi-sync

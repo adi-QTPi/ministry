@@ -14,17 +14,16 @@ apt_packages:
   - fd-find
   - ripgrep
   - duf
+  - curl
+  - kubectl
 
-linux_archive_binaries:
-  - name: eza
-    url: "https://github.com/eza-community/eza/releases/download/v0.23.5/eza_{{ rust_arch }}-unknown-linux-gnu.tar.gz"
-  - name: curlie
-    url: "https://github.com/rs/curlie/releases/download/v1.8.2/curlie_1.8.2_linux_{{ go_arch }}.tar.gz"
+apt_repositories:
+  - name: kubernetes
+    repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.37/deb/ /"
+    key_url: "https://pkgs.k8s.io/core:/stable:/v1.37/deb/Release.key"
+    keyring: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
+
+install_scripts:
   - name: starship
-    url: "https://github.com/starship/starship/releases/download/v1.26.0/starship-{{ rust_arch }}-unknown-linux-gnu.tar.gz"
-  - name: terraform
-    url: "https://releases.hashicorp.com/terraform/1.16.2/terraform_1.16.2_linux_{{ go_arch }}.zip"
-
-linux_raw_binaries:
-  - name: kubectl
-    url: "https://dl.k8s.io/release/v1.37.0/bin/linux/{{ go_arch }}/kubectl"
+    url: "https://starship.rs/install.sh"
+    args: "-y"
