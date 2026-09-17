@@ -42,7 +42,7 @@ jobs:
       - name: Syntax Check
         run: |
           echo "=== SYNTAX CHECK ===" > syntax_output.txt
-          ansible-playbook -i inventory/hosts.yaml playbooks/site.yaml --syntax-check >> syntax_output.txt 2>&1
+          ansible-playbook -i inventory/hosts.yaml playbooks/*.yaml --syntax-check >> syntax_output.txt 2>&1
 
       - name: Upload Syntax Output
         if: always()
@@ -106,7 +106,7 @@ jobs:
         continue-on-error: true
         run: |
           echo "=== LINT ===" > lint_output.txt
-          ansible-lint playbooks/site.yaml playbooks/bootstrap.yaml >> lint_output.txt 2>&1
+          ansible-lint playbooks/ >> lint_output.txt 2>&1
 
       - name: Generate Report
         run: |

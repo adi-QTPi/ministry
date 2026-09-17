@@ -1,0 +1,6 @@
+---
+- name: Clear identities from ssh-agent
+  ansible.builtin.command:
+    cmd: ssh-add -D
+  changed_when: false
+  check_mode: false

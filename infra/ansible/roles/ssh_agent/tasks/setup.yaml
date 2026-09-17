@@ -1,0 +1,20 @@
+---
+- name: Assert SSH key is available
+  ansible.builtin.assert:
+    that:
+      - ssh_agent_key | length > 0
+    fail_msg: "ssh_agent_key (vault ssh_key_ansible) is empty."
+
+- name: Assert a usable ssh-agent is present
+  ansible.builtin.assert:
+    that:
+      - lookup('env', 'SSH_AUTH_SOCK') | length > 0
+    fail_msg: "No SSH_AUTH_SOCK in the controller environment. Start an agent first (eval $(ssh-agent -s))."
+
+- name: Load SSH key into ssh-agent
+  ansible.builtin.command:
+    cmd: ssh-add -
+    stdin: "{{ ssh_agent_key }}\n"
+  changed_when: false
+  check_mode: false
+  no_log: true

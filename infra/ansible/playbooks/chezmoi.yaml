@@ -1,4 +1,15 @@
 ---
+- name: Load SSH key into memory (ssh-agent)
+  hosts: localhost
+  gather_facts: false
+  become: false
+  tags: [always]
+  tasks:
+    - name: Prime controller ssh-agent
+      ansible.builtin.import_role:
+        name: ssh_agent
+        tasks_from: setup
+
 - name: Install chezmoi and shell tooling, then apply dotfiles
   hosts: "{{ target | default('all') }}"
   gather_facts: true
@@ -10,3 +21,14 @@
         chezmoi_repo_branch: "main"
         chezmoi_repo_dir: "dotfiles"
         chezmoi_sync_minute: "*/30"
+
+- name: Purge SSH key from agent memory
+  hosts: localhost
+  gather_facts: false
+  become: false
+  tags: [always]
+  tasks:
+    - name: Clear identities from ssh-agent
+      ansible.builtin.import_role:
+        name: ssh_agent
+        tasks_from: teardown

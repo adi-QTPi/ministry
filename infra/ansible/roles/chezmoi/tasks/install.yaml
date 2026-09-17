@@ -83,4 +83,5 @@
 - name: Run official install scripts
   ansible.builtin.command:
     cmd: "sh /tmp/{{ item.name }}-install.sh {{ item.args | default('') }}"
+    creates: "{{ item.creates | default(omit) }}"
   loop: "{{ install_scripts }}"

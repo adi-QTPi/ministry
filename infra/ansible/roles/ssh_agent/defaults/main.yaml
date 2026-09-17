@@ -1,0 +1,6 @@
+---
+# Key material to load into the controller-side ssh-agent.
+ssh_agent_key: "{{ ssh_key_ansible }}"
+
+# Which task file `tasks/main.yaml` dispatches to when the role is used wholesale.
+ssh_agent_action: setup

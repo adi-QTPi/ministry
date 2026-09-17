@@ -9,11 +9,11 @@ all:
     # internal servers reachable through tailscale interface.
     internal:
       hosts:
-        bella: 
+        bella:
           ansible_host: "{{ bella }}"
         rubie:
-          ansible_host: "{{ rubie }}" 
-        teddy: 
-          ansible_host: "{{ teddy }}" 
+          ansible_host: "{{ rubie }}"
+        teddy:
+          ansible_host: "{{ teddy }}"
         raj:
           ansible_host: "{{ raj }}"
