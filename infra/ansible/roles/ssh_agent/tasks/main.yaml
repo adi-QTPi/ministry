@@ -1,0 +1,3 @@
+---
+- name: Manage SSH agent lifecycle
+  ansible.builtin.include_tasks: "{{ ssh_agent_action }}.yaml"

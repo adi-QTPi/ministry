@@ -27,3 +27,4 @@ install_scripts:
   - name: starship
     url: "https://starship.rs/install.sh"
     args: "-y"
+    creates: /usr/local/bin/starship

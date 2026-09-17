@@ -37,7 +37,7 @@ caddy_proxy_services:
     host: "{{ raj }}"
     directives:
       - encode gzip zstd
-  
+
   - subdomain: request
     port: 5656
     host: "{{ raj }}"
@@ -49,7 +49,7 @@ caddy_proxy_services:
   - subdomain: "*.apps"
     port: 31150
     host: "{{ k8s_apps_ingress }}"
-    
+
   - subdomain: "*.stress"
     port: 31150
     host: "{{ k8s_apps_ingress }}"

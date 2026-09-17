@@ -5,13 +5,10 @@
   become: false
   tags: [always]
   tasks:
-    - name: Add key directly to running SSH agent
-      ansible.builtin.shell: |
-        set -o pipefail
-        echo "{{ ssh_key_ansible }}" | ssh-add -
-      changed_when: false
-      no_log: true
-      check_mode: false
+    - name: Prime controller ssh-agent
+      ansible.builtin.import_role:
+        name: ssh_agent
+        tasks_from: setup
 
 - name: Fetch terraform state for ingress edge
   hosts: localhost
@@ -69,7 +66,7 @@
   become: false
   tags: [always]
   tasks:
-    - name: Clear all keys from ssh-agent
-      ansible.builtin.command: ssh-add -D
-      changed_when: false
-      check_mode: false
+    - name: Clear ansible key from ssh-agent
+      ansible.builtin.import_role:
+        name: ssh_agent
+        tasks_from: teardown
