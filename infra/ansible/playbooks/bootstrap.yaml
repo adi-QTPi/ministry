@@ -40,6 +40,15 @@
         mode: "0440"
         validate: /usr/sbin/visudo -cf %s
 
+    # the official installer (curl -fsSL https://tailscale.com/install.sh | sh) writes /etc/apt/sources.list.d/tailscale.list
+    # with signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg. the role below owns its own deb822 source for the same
+    # repo, suite and component (/etc/apt/sources.list.d/tailscale.sources, signed-by=/etc/apt/keyrings/tailscale.gpg), and apt
+    # refuses to read the source list when one source carries two different Signed-By values.
+    - name: Remove Tailscale apt source left behind by the official installer
+      ansible.builtin.file:
+        path: /etc/apt/sources.list.d/tailscale.list
+        state: absent
+
     - name: Install and connect Tailscale
       ansible.builtin.include_role:
         name: artis3n.tailscale.machine

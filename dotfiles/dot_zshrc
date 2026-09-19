@@ -53,7 +53,7 @@ bindkey -M vicmd 'v' edit-command-line
 
 # Plugins (antidote)
 ANTIDOTE_DIR="${ZDOTDIR:-$HOME}/.antidote"
-[[ -d "$ANTIDOTE_DIR" ]] || git clone --depth=1 https://github.com/mattmc3/antidote.git "$ANTIDOTE_DIR"
+[[ -d "$ANTIDOTE_DIR" ]] || gitclone --depth=1 https://github.com/mattmc3/antidote.git "$ANTIDOTE_DIR"
 
 autoload -Uz compinit
 compinit
@@ -61,7 +61,12 @@ compinit
 source "$ANTIDOTE_DIR/antidote.zsh"
 antidote load "${ZDOTDIR:-$HOME}/.zsh_plugins.txt"
 
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=6'
+
 # Integrations
+# Must stay after bindkey -v: bindkey -v rebuilds the viins keymap and would
+# clobber the Ctrl-R binding fzf installs for vi insert mode.
+eval "$(fzf --zsh)"
 eval "$(zoxide init zsh)"
 eval "$(starship init zsh)"
 eval "$(direnv hook zsh)"
