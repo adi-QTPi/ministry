@@ -28,3 +28,8 @@ install_scripts:
     url: "https://starship.rs/install.sh"
     args: "-y"
     creates: /usr/local/bin/starship
+  - name: herdr
+    url: "https://herdr.dev/install.sh"
+    env:
+      HERDR_INSTALL_DIR: /usr/local/bin
+    creates: /usr/local/bin/herdr
