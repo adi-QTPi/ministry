@@ -32,9 +32,18 @@ alias k="kubectl"
 alias find="fdfind"
 alias grep="rg"
 alias df="duf"
-alias cp="rsync -ah --info=progress2"
-alias mv="rsync -ah --info=progress2 --remove-source-files"
-alias scp="rsync -avzP"
+RSYNC_BIN="rsync"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    if [[ -x /opt/homebrew/bin/rsync ]]; then
+        RSYNC_BIN="/opt/homebrew/bin/rsync"
+    elif [[ -x /usr/local/bin/rsync ]]; then
+        RSYNC_BIN="/usr/local/bin/rsync"
+    fi
+fi
+
+alias cp="$RSYNC_BIN -ah --info=progress2"
+alias mv="$RSYNC_BIN -ah --info=progress2 --remove-source-files"
+alias scp="$RSYNC_BIN -avzP"
 
 # OS-specific dotfiles sync
 if [[ "$OSTYPE" == "darwin"* ]]; then
