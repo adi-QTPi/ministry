@@ -23,7 +23,37 @@ require("lazy").setup({
       vim.opt.termguicolors = true
       vim.o.background = "dark"
       vim.cmd("colorscheme solarized")
+
+      local hl = vim.api.nvim_set_hl
+      hl(0, "Identifier", { fg = "#2aa198" })
+      hl(0, "Function", { fg = "#2aa198" })
+      hl(0, "shDerefVar", { fg = "#2aa198" })
+      hl(0, "shDerefSimple", { fg = "#2aa198" })
+      hl(0, "shVariable", { fg = "#2aa198" })
+      hl(0, "shComment", { fg = "#657b83" })
     end,
+  },
+  {
+    "nvim-treesitter/nvim-treesitter",
+    branch = "master",
+    build = ":TSUpdate",
+    config = function()
+      require("nvim-treesitter.configs").setup({
+        ensure_installed = { "bash", "markdown", "markdown_inline" },
+        highlight = { enable = true },
+      })
+    end,
+  },
+  {
+    "MeanderingProgrammer/render-markdown.nvim",
+    ft = { "markdown" },
+    dependencies = {
+      "nvim-treesitter/nvim-treesitter",
+      "nvim-tree/nvim-web-devicons",
+    },
+    opts = {
+      anti_conceal = { enabled = true },
+    },
   },
 })
 
