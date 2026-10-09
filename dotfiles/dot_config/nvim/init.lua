@@ -35,13 +35,11 @@ require("lazy").setup({
   },
   {
     "nvim-treesitter/nvim-treesitter",
-    branch = "master",
+    branch = "main",
+    lazy = false,
     build = ":TSUpdate",
     config = function()
-      require("nvim-treesitter.configs").setup({
-        ensure_installed = { "bash", "markdown", "markdown_inline" },
-        highlight = { enable = true },
-      })
+      require("nvim-treesitter").install({ "bash", "markdown", "markdown_inline" })
     end,
   },
   {
