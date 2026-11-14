@@ -16,8 +16,11 @@ ARG TARGETARCH
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
        bash ca-certificates curl git gh openssh-client python3 python3-venv python3-yaml \
-       build-essential pkg-config ripgrep jq tini procps tmux ttyd supervisor nginx unzip sudo \
+       build-essential pkg-config ripgrep jq tini procps tmux supervisor nginx unzip sudo \
     && rm -rf /var/lib/apt/lists/*
+
+COPY --chmod=755 install-ttyd.sh /usr/local/bin/install-ttyd
+RUN install-ttyd "${TARGETARCH}" && ttyd --version
 
 # Install outside the persistent home, so mounting an empty home hides no tools.
 RUN npm install --global --prefix /opt/agents \
