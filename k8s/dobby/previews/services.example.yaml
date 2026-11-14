@@ -1,0 +1,10 @@
+# Copy/merge a group like this into /preview-config/services.yaml inside dobby.
+- Live previews:
+    - Shop redesign:
+        href: https://dobby-previews.${TAILNET_DNS}/live/5173/
+        description: Shop, Vite on port 5173
+        target: _self
+    - Admin wireframe:
+        href: https://dobby-previews.${TAILNET_DNS}/live/5174/
+        description: Admin, Vite on port 5174
+        target: _self

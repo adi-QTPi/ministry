@@ -1,0 +1,14 @@
+# OAuth credentials are supplied through a precreated operator-oauth Secret.
+oauth: {clientId: "", clientSecret: ""}
+operatorConfig:
+  hostname: dobby-operator
+  defaultTags: ["tag:dobby-operator"]
+  resources:
+    requests: {cpu: 50m, memory: 128Mi}
+    limits: {cpu: 500m, memory: 512Mi}
+proxyConfig:
+  defaultTags: "tag:dobby"
+# No subnet router, exit node, API-server proxy, or Funnel.
+apiServerProxyConfig:
+  mode: "false"
+  allowImpersonation: "false"

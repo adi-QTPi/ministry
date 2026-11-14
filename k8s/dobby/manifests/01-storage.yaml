@@ -1,0 +1,148 @@
+# Static retained local volumes. Capacities do not enforce filesystem quotas.
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dobby-home
+spec:
+  capacity:
+    storage: 3Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ''
+  local:
+    path: ${BASE_DIR}/home
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - ${NODE_NAME}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dobby-workspace
+spec:
+  capacity:
+    storage: 12Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ''
+  local:
+    path: ${BASE_DIR}/workspace
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - ${NODE_NAME}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dobby-preview-config
+spec:
+  capacity:
+    storage: 256Mi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ''
+  local:
+    path: ${BASE_DIR}/preview-config
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - ${NODE_NAME}
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: dobby-relay
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ''
+  local:
+    path: ${BASE_DIR}/relay
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - ${NODE_NAME}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dobby-home
+  namespace: dobby
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: ''
+  volumeName: dobby-home
+  resources:
+    requests:
+      storage: 3Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dobby-workspace
+  namespace: dobby
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: ''
+  volumeName: dobby-workspace
+  resources:
+    requests:
+      storage: 12Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dobby-preview-config
+  namespace: dobby
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: ''
+  volumeName: dobby-preview-config
+  resources:
+    requests:
+      storage: 256Mi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dobby-relay
+  namespace: dobby
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: ''
+  volumeName: dobby-relay
+  resources:
+    requests:
+      storage: 1Gi

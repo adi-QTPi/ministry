@@ -1,0 +1,270 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dobby-workspace
+  namespace: dobby
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: dobby-workspace
+  template:
+    metadata:
+      labels:
+        app: dobby-workspace
+    spec:
+      serviceAccountName: dobby
+      automountServiceAccountToken: false
+      hostUsers: false
+      nodeSelector:
+        dobby.workloads/enabled: 'true'
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10000
+        runAsGroup: 10000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: workspace
+        image: ${WORKSPACE_IMAGE}
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: dobby-workspace
+        ports:
+        - name: terminal
+          containerPort: 7681
+        - name: previews
+          containerPort: 8080
+        securityContext:
+          allowPrivilegeEscalation: true
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - CHOWN
+            - DAC_OVERRIDE
+            - FOWNER
+            - FSETID
+            - SETGID
+            - SETUID
+            - SETFCAP
+            - SYS_CHROOT
+          readOnlyRootFilesystem: false
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+            ephemeral-storage: 512Mi
+          limits:
+            cpu: '1'
+            memory: 4Gi
+            ephemeral-storage: 2Gi
+        volumeMounts:
+        - name: home
+          mountPath: /home/dobby
+        - name: workspace
+          mountPath: /workspace
+        - name: preview-config
+          mountPath: /preview-config
+        - name: tmp
+          mountPath: /tmp
+        - name: shm
+          mountPath: /dev/shm
+        - name: gateway-config
+          mountPath: /etc/dobby
+          readOnly: true
+      volumes:
+      - name: home
+        persistentVolumeClaim:
+          claimName: dobby-home
+      - name: workspace
+        persistentVolumeClaim:
+          claimName: dobby-workspace
+      - name: preview-config
+        persistentVolumeClaim:
+          claimName: dobby-preview-config
+      - name: tmp
+        emptyDir:
+          sizeLimit: 512Mi
+      - name: shm
+        emptyDir:
+          medium: Memory
+          sizeLimit: 512Mi
+      - name: gateway-config
+        configMap:
+          name: dobby-nginx
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dobby-relay
+  namespace: dobby
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: dobby-relay
+  template:
+    metadata:
+      labels:
+        app: dobby-relay
+    spec:
+      serviceAccountName: dobby
+      automountServiceAccountToken: false
+      hostUsers: false
+      nodeSelector:
+        dobby.workloads/enabled: 'true'
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: relay
+        image: ${RELAY_IMAGE}
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: dobby-relay
+        - secretRef:
+            name: dobby-relay
+        ports:
+        - name: http
+          containerPort: 3005
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+            ephemeral-storage: 256Mi
+          limits:
+            cpu: 250m
+            memory: 768Mi
+            ephemeral-storage: 512Mi
+        startupProbe:
+          tcpSocket:
+            port: http
+          periodSeconds: 5
+          failureThreshold: 60
+        readinessProbe:
+          tcpSocket:
+            port: http
+          periodSeconds: 10
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: dobby-relay
+      - name: tmp
+        emptyDir:
+          sizeLimit: 512Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dobby-dashboard
+  namespace: dobby
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: dobby-dashboard
+  template:
+    metadata:
+      labels:
+        app: dobby-dashboard
+    spec:
+      serviceAccountName: dobby
+      automountServiceAccountToken: false
+      hostUsers: false
+      nodeSelector:
+        dobby.workloads/enabled: 'true'
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10000
+        runAsGroup: 10000
+        fsGroup: 10000
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: homepage
+        image: ${DASHBOARD_IMAGE}
+        imagePullPolicy: IfNotPresent
+        command:
+        - node
+        - server.js
+        workingDir: /app
+        env:
+        - name: HOSTNAME
+          value: 0.0.0.0
+        - name: PORT
+          value: '3000'
+        - name: HOMEPAGE_ALLOWED_HOSTS
+          value: dobby-previews.${TAILNET_DNS}
+        - name: NEXT_TELEMETRY_DISABLED
+          value: '1'
+        ports:
+        - name: http
+          containerPort: 3000
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+            ephemeral-storage: 128Mi
+          limits:
+            cpu: 250m
+            memory: 512Mi
+            ephemeral-storage: 512Mi
+        startupProbe:
+          httpGet:
+            path: /api/healthcheck
+            port: http
+          failureThreshold: 60
+          periodSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /api/healthcheck
+            port: http
+        volumeMounts:
+        - name: config
+          mountPath: /app/config
+        - name: cache
+          mountPath: /app/.next/cache
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: config
+        persistentVolumeClaim:
+          claimName: dobby-preview-config
+      - name: cache
+        emptyDir:
+          sizeLimit: 256Mi
+      - name: tmp
+        emptyDir:
+          sizeLimit: 128Mi

@@ -1,0 +1,7 @@
+title: Dobby previews
+description: Live development servers running inside dobby
+theme: dark
+color: slate
+headerStyle: clean
+hideVersion: true
+target: _self

@@ -1,0 +1,150 @@
+name: dobby-image
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "k8s/dobby/image/**"
+      - ".github/workflows/dobby-image.yml"
+  pull_request:
+    paths:
+      - "k8s/dobby/image/**"
+      - ".github/workflows/dobby-image.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dobby-image-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and test ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+          - arch: amd64
+            runner: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+    env:
+      PUBLISH: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set image reference
+        id: image
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: |
+          IMAGE_NAME="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/dobby"
+          if [[ "$PUBLISH" == "true" ]]; then
+            IMAGE_REF="$IMAGE_NAME:build-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT-$ARCH"
+          else
+            IMAGE_REF="dobby-ci:$ARCH"
+          fi
+          printf 'name=%s\nref=%s\n' "$IMAGE_NAME" "$IMAGE_REF" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to GHCR
+        if: env.PUBLISH == 'true'
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build native image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: k8s/dobby/image
+          file: k8s/dobby/image/Dockerfile
+          platforms: linux/${{ matrix.arch }}
+          push: ${{ env.PUBLISH == 'true' }}
+          load: ${{ env.PUBLISH != 'true' }}
+          tags: ${{ steps.image.outputs.ref }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.title=dobby
+          provenance: ${{ env.PUBLISH == 'true' && 'mode=max' || 'false' }}
+          sbom: ${{ env.PUBLISH == 'true' }}
+          cache-from: type=gha,scope=dobby-${{ matrix.arch }}
+          cache-to: type=gha,mode=max,scope=dobby-${{ matrix.arch }}
+
+      - name: Smoke-test image tools
+        env:
+          IMAGE_REF: ${{ steps.image.outputs.ref }}
+        run: |
+          if [[ "$PUBLISH" == "true" ]]; then
+            docker pull "$IMAGE_REF"
+          fi
+          docker run --rm --entrypoint /bin/bash "$IMAGE_REF" -c '
+            set -euo pipefail
+            test "$(id -u)" = 10000
+            test -f /opt/firstmate/AGENTS.md
+            test -x /usr/local/bin/dobby-firstmate
+            test -x /usr/local/bin/dobby-preview
+            claude --version
+            codex --version
+            cmd --version
+            happier --version
+            treehouse --version
+            no-mistakes --version
+            gh-axi --version
+            chrome-devtools-axi --version
+            tasks-axi --version
+            quota-axi --version
+            ttyd --version
+            sudo -n id -u | grep -qx 0
+          '
+
+  publish:
+    name: Publish multi-architecture image
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to GHCR
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish and verify manifest
+        run: |
+          IMAGE_NAME="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/dobby"
+          BUILD_TAG="build-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          docker buildx imagetools create \
+            --tag "$IMAGE_NAME:main" \
+            --tag "$IMAGE_NAME:sha-$GITHUB_SHA" \
+            "$IMAGE_NAME:$BUILD_TAG-arm64" \
+            "$IMAGE_NAME:$BUILD_TAG-amd64"
+          docker buildx imagetools inspect "$IMAGE_NAME:sha-$GITHUB_SHA" --raw \
+            | jq -e '[.manifests[].platform.architecture] | (index("arm64") != null) and (index("amd64") != null)'
+          DIGEST=$(docker buildx imagetools inspect "$IMAGE_NAME:sha-$GITHUB_SHA" \
+            | awk '$1 == "Digest:" {print $2; exit}')
+          [[ "$DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]]
+          printf 'Published: `%s@%s`\n\nPlatforms: linux/arm64, linux/amd64\n' \
+            "$IMAGE_NAME" "$DIGEST" >> "$GITHUB_STEP_SUMMARY"

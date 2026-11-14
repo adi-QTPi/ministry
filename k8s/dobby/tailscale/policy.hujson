@@ -1,0 +1,15 @@
+// MERGE this fragment into the existing tailnet policy. Do not replace it.
+// Tailscale grants are additive: existing allow-all rules must also be narrowed.
+{
+  "tagOwners": {
+    "tag:dobby-operator": ["${TAILNET_USER}"],
+    "tag:dobby": ["tag:dobby-operator"]
+  },
+  "grants": [
+    {
+      "src": ["${TAILNET_USER}"],
+      "dst": ["tag:dobby"],
+      "ip": ["tcp:443"]
+    }
+  ]
+}
