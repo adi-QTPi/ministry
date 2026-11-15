@@ -63,7 +63,8 @@ RUN groupmod --new-name dobby --gid 10000 node \
     && chown 10000:10000 /home/dobby /workspace /preview-config \
     && printf 'dobby ALL=(ALL) NOPASSWD: ALL\n' > /etc/sudoers.d/dobby \
     && chmod 0440 /etc/sudoers.d/dobby \
-    && visudo -cf /etc/sudoers.d/dobby
+    && visudo -cf /etc/sudoers.d/dobby \
+    && printf '%s\n' 'export PATH="$HOME/.local/bin:/opt/agents/bin:$PATH"' > /etc/profile.d/dobby-path.sh
 
 COPY --chmod=755 entrypoint.sh /usr/local/bin/dobby-entrypoint
 COPY --chmod=755 happier-start.sh /usr/local/bin/dobby-happier-start
