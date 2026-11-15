@@ -92,7 +92,9 @@ jobs:
           if [[ "$PUBLISH" == "true" ]]; then
             docker pull "$IMAGE_REF"
           fi
-          docker run --rm --entrypoint /bin/bash "$IMAGE_REF" -c '
+          docker run --rm --entrypoint /bin/bash \
+            --mount "type=bind,source=$PWD/k8s/dobby/image/test-herdr.py,target=/tmp/test-herdr.py,readonly" \
+            "$IMAGE_REF" -c '
             set -euo pipefail
             test "$(id -u)" = 10000
             test -f /opt/firstmate/AGENTS.md
@@ -114,22 +116,7 @@ jobs:
             ttyd --version
             sudo -n id -u | grep -qx 0
             bash -lc "command -v claude && command -v codex && command -v cmd && command -v happier && codex --version && happier --version"
-            # Exercise the real headless server as the unprivileged workspace user.
-            cd /workspace
-            herdr --session image-smoke server &
-            server_pid=$!
-            trap "kill $server_pid 2>/dev/null || true" EXIT
-            ready=false
-            for attempt in {1..20}; do
-              if herdr --session image-smoke status server --json | python3 -c "import json,sys; sys.exit(0 if json.load(sys.stdin).get(\"running\") else 1)"; then
-                ready=true
-                break
-              fi
-              sleep 1
-            done
-            test "$ready" = true
-            kill -INT "$server_pid"
-            wait "$server_pid"
+            python3 /tmp/test-herdr.py
           '
 
   publish:

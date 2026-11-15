@@ -11,3 +11,4 @@
 !install-tailscale.sh
 !tailscale-start.sh
 !install-herdr.sh
+!herdr-start.py

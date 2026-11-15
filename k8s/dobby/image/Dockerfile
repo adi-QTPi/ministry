@@ -78,6 +78,7 @@ COPY --chmod=755 preview.py /usr/local/bin/dobby-preview
 COPY --chmod=755 seed-firstmate.py /usr/local/bin/dobby-seed-firstmate
 COPY --chmod=755 firstmate.sh /usr/local/bin/dobby-firstmate
 COPY --chmod=755 tailscale-start.sh /usr/local/bin/dobby-tailscale-start
+COPY --chmod=755 herdr-start.py /usr/local/bin/dobby-herdr-start
 COPY supervisord.conf /etc/dobby-supervisord.conf
 
 ENV HOME=/home/dobby \
