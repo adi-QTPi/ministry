@@ -242,9 +242,9 @@ git config --global init.defaultBranch main
 - Open `https://dobby-terminal.smelt-gray.ts.net`. It provides the actual dobby shell, with the same mounted home, credentials, tools and container-local sudo. Native Claude Code, Codex, CommandCode and Firstmate can run directly here.
 - ttyd, nginx and the Happier daemon run under Supervisor inside the same workspace container. A failed Happier login does not prevent terminal access. tmux preserves running terminal sessions between browser connections; container replacement still stops them.
 - The browser terminal runs native Firstmate/agent TUIs directly, independently of Happier SDK integration. The terminal is a full-control endpoint. Only the intended tailnet identity should have access. ttyd checks WebSocket origins, exposes no URL-argument execution and has no public listener outside the selected Tailscale Service. Multiple browser clients share the same `dobby` tmux session.
-- Start each project's own server on localhost at a free port in 3000..5999, in a named tmux window. Register it with `dobby-preview add "Project name" PORT`. No Kubernetes resource is created by registration. The project needs compatible `/live/PORT/` base-path settings; see the framework-independent portal guide.
+- Register each project with `dobby-preview add "Project name" PORT --directory /workspace/project --command 'npm run dev -- --host 127.0.0.1 --port PORT'`. Supervisor starts and restarts the server; choose a free port in 3000..5999 and use the project's actual command. No Kubernetes resource is created by registration. The project needs compatible `/live/PORT/` base-path settings; see the framework-independent portal guide.
 - After configuring email access, open `https://hq-previews.YOUR_DOMAIN`, complete the emailed code challenge and choose a preview. Refresh Homepage after adding tiles if needed; Vite handles subsequent source-edit hot reload.
-- [Exact setup, Vite example, registry format and recovery limits](previews/README.md). Homepage and nginx are existing services; the registration helper only updates dashboard YAML. No custom dashboard, scanner or launcher is required. Other frameworks need compatible path-prefix/asset/WebSocket settings.
+- [Exact setup, Vite example, registry format and recovery limits](previews/README.md). Homepage and nginx are existing services; the registration helper manages per-preview Supervisor programs and dashboard tiles. Saved services restart with the workspace; no custom dashboard or scanner is required. Other frameworks need compatible path-prefix/asset/WebSocket settings.
 - Playwright/Chromium remains available inside dobby for visual checks. Its sandbox compatibility still needs a live test; don't enable privileged mode to bypass errors.
 
 ### 11. Verify independence, isolation and recovery
@@ -283,7 +283,7 @@ git config --global init.defaultBranch main
 
 ## Last updated
 
-- Date: 2026-11-15 17:58 UTC
-- Previous commit: [fa79787](https://github.com/adi-QTPi/ministry/commit/fa79787)
+- Date: 2026-11-15 21:11 UTC
+- Previous commit: [7da0766](https://github.com/adi-QTPi/ministry/commit/7da0766)
 
 _Date and commit hash are auto-generated. Commit hash is of the commit previous to the commit which modified this README._

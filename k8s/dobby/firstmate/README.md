@@ -42,7 +42,7 @@ dobby-firstmate
 4. Register a disposable project through Firstmate's intake in `direct-PR` mode. Require human PR review; do not enable `+yolo` merge autonomy as part of this setup.
 5. Start with one lead and one worker, and one build/test process at a time. This is an operating rule, not an enforced scheduler. Every worker shares the workspace's CPU/memory limits and credential authority.
 6. Confirm the worker's separate worktree, actual completion wake, resulting PR and tests. Firstmate workers are tmux windows, not automatically separate Happier cards.
-7. Let the project's agent start its own localhost preview and register a tile with `dobby-preview add "Project name" PORT`. Firstmate uses the same preview portal and mounted files as standalone agents.
+7. Let the project's agent register its localhost preview with `dobby-preview add "Project name" PORT --directory /workspace/project --command 'npm run dev -- --host 127.0.0.1 --port PORT'`, using the project's actual command. Supervisor starts, restarts and restores the preview service. Firstmate uses the same preview portal and mounted files as standalone agents.
 
 ## Acceptance and recovery
 
@@ -61,7 +61,7 @@ dobby-firstmate
 
 ## Last updated
 
-- Date: 2026-11-14 23:12 UTC
-- Previous commit: [3df6ade](https://github.com/adi-QTPi/ministry/commit/3df6ade)
+- Date: 2026-11-15 21:11 UTC
+- Previous commit: [7da0766](https://github.com/adi-QTPi/ministry/commit/7da0766)
 
 _Date and commit hash are auto-generated. Commit hash is of the commit previous to the commit which modified this README._

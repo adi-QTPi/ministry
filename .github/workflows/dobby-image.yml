@@ -94,6 +94,7 @@ jobs:
           fi
           docker run --rm --entrypoint /bin/bash \
             --mount "type=bind,source=$PWD/k8s/dobby/image/test-herdr.py,target=/tmp/test-herdr.py,readonly" \
+            --mount "type=bind,source=$PWD/k8s/dobby/image/test-preview.py,target=/tmp/test-preview.py,readonly" \
             "$IMAGE_REF" -c '
             set -euo pipefail
             test "$(id -u)" = 10000
@@ -116,6 +117,7 @@ jobs:
             sudo -n id -u | grep -qx 0
             bash -lc "command -v claude && command -v codex && command -v cmd && command -v happier && codex --version && happier --version"
             python3 /tmp/test-herdr.py
+            python3 /tmp/test-preview.py /usr/local/bin/dobby-preview
           '
 
   publish:
