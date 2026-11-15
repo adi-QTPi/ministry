@@ -21,6 +21,6 @@ if [[ -f "$credentials_file" ]]; then
     done < "$credentials_file"
 fi
 
-# Both the web terminal and Happier inherit the same mounted credentials.
-# ttyd is available even before the Happier account has been paired.
+# Happier and Herdr inherit the same mounted credentials.
+# Native Tailscale SSH provides interactive shell access.
 exec /usr/bin/supervisord -n -c /etc/dobby-supervisord.conf

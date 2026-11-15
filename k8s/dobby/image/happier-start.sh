@@ -1,6 +1,6 @@
 #!/bin/bash
 set -euo pipefail
-echo 'Waiting for Happier pairing. Run happier auth login in the browser terminal.'
+echo 'Waiting for Happier pairing. Run happier auth login inside dobby over Tailscale SSH.'
 until happier auth status --json 2>/dev/null | python3 -c '
 import json,sys
 try:

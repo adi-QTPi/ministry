@@ -19,9 +19,6 @@ RUN apt-get update \
        build-essential pkg-config ripgrep jq tini procps tmux supervisor nginx unzip sudo \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --chmod=755 install-ttyd.sh /usr/local/bin/install-ttyd
-RUN install-ttyd "${TARGETARCH}" && ttyd --version
-
 COPY --chmod=755 install-tailscale.sh /usr/local/bin/install-tailscale
 RUN install-tailscale "${TARGETARCH}" && tailscale version
 

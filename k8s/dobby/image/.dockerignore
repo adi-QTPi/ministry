@@ -7,7 +7,6 @@
 !install-firstmate-tools.sh
 !seed-firstmate.py
 !firstmate.sh
-!install-ttyd.sh
 !install-tailscale.sh
 !tailscale-start.sh
 !install-herdr.sh
