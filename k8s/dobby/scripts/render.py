@@ -38,6 +38,8 @@ def read_settings(path):
             raise ValueError(f"{key} must use an immutable sha256 digest.")
     if not re.fullmatch(r"[a-z0-9][a-z0-9.-]*\.ts\.net", settings["TAILNET_DNS"]):
         raise ValueError("TAILNET_DNS must be your tailnet DNS suffix, without a scheme.")
+    if not re.fullmatch(r"[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+", settings["PREVIEW_PUBLIC_HOST"]):
+        raise ValueError("PREVIEW_PUBLIC_HOST must be a DNS hostname without a scheme, port or wildcard.")
     if not re.fullmatch(r"[a-z0-9][a-z0-9.-]*", settings["NODE_NAME"]):
         raise ValueError("NODE_NAME must be a Kubernetes hostname label value.")
     if not re.fullmatch(r"/[-a-zA-Z0-9_/]+", settings["BASE_DIR"]) or ".." in settings["BASE_DIR"]:

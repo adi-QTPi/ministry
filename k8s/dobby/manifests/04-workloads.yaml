@@ -242,7 +242,7 @@ spec:
         - name: PORT
           value: '3000'
         - name: HOMEPAGE_ALLOWED_HOSTS
-          value: dobby-previews.${TAILNET_DNS}
+          value: dobby-previews.${TAILNET_DNS},${PREVIEW_PUBLIC_HOST}
         - name: NEXT_TELEMETRY_DISABLED
           value: '1'
         ports:

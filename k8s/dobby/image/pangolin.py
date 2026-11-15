@@ -146,7 +146,21 @@ def routes(data):
     # Traefik terminates TLS only on loopback; the outer proxy owns public TLS.
     # Static routes avoid needing a WireGuard exit node or Docker socket.
     host = lambda name: f"Host(`{origin(data[name])}`)"
-    badger = {"apiBaseUrl": "http://127.0.0.1:6101/api/v1"}
+    # Badger has no defaults for these fields. Match Pangolin's server defaults.
+    badger = {
+        "apiBaseUrl": "http://127.0.0.1:6101/api/v1",
+        "userSessionCookieName": "p_session_token",
+        "resourceSessionRequestParam": "resource_session_request_param",
+        "accessTokenQueryParam": "p_token",
+        "accessTokenIdHeader": "P-Access-Token-Id",
+        "accessTokenHeader": "P-Access-Token",
+        "remoteUserIdHeader": "Remote-User-Id",
+        "remoteVirtualApiKeyIdHeader": "Remote-Virtual-Api-Key-Id",
+        "remoteUserHeader": "Remote-User",
+        "remoteEmailHeader": "Remote-Email",
+        "remoteNameHeader": "Remote-Name",
+        "remoteRoleHeader": "Remote-Role",
+    }
     return {"http": {
         "routers": {
             "previews": {"entryPoints": ["websecure"], "rule": host("preview_url"),
@@ -214,6 +228,12 @@ class Api:
             self.cookie = ""
 
 
+def fresh_database(path):
+    # Pangolin's JS export is named users, but its SQLite table is singular.
+    with sqlite3.connect(f"file:{path}?mode=ro", uri=True) as db:
+        return db.execute('SELECT count(*) FROM "user"').fetchone()[0] == 0
+
+
 def run(root):
     READY.unlink(missing_ok=True)
     children = []
@@ -238,9 +258,7 @@ def run(root):
         env = {**os.environ, "ENVIRONMENT": "prod", "NODE_ENV": "production", "ENABLE_SQLITE_WAL_MODE": "true"}
         subprocess.run(["node", "dist/migrations.mjs"], cwd=APP, env=env, check=True)
         # Only initialize a fresh instance. Never reset an existing administrator.
-        with sqlite3.connect(f"file:{runtime / 'db/db.sqlite'}?mode=ro", uri=True) as db:
-            fresh = db.execute('SELECT count(*) FROM users').fetchone()[0] == 0
-        if fresh:
+        if fresh_database(runtime / "db/db.sqlite"):
             subprocess.run(["node", "dist/cli.mjs", "set-admin-credentials", "--email", state["email"],
                             "--password", state["password"]], cwd=APP, env=env, check=True)
         children.append(subprocess.Popen(["node", "--enable-source-maps", "dist/server.mjs"], cwd=APP, env=env))
