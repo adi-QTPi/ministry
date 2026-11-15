@@ -128,7 +128,7 @@ jobs:
               sleep 1
             done
             test "$ready" = true
-            herdr --session image-smoke server stop
+            kill -INT "$server_pid"
             wait "$server_pid"
           '
 
