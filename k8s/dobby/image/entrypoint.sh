@@ -3,6 +3,7 @@ set -euo pipefail
 umask 077
 mkdir -p "$HOME/.happier" "$HOME/.config" "$HOME/.cache" "$HOME/.local/bin"
 dobby-seed-firstmate /opt/firstmate /workspace/firstmate
+dobby-pangolin seed
 
 # Optional centrally managed token file. Read literal values, never source shell.
 credentials_file="$HOME/.config/dobby/credentials.env"

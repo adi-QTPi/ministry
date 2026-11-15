@@ -1,7 +1,7 @@
 # dobby
 
 - Status: deployment configuration prepared, not deployed or runtime-tested. Bella was inspected read-only over `karma@bella`; see [verified inventory](inventory.md).
-- Existing software only: Happier, Claude Code, Codex, CommandCode, ttyd, tmux, Supervisor, Homepage, nginx, and the Tailscale Kubernetes operator. The scripts here only prepare directories, render manifests, load credentials, seed the dashboard configuration and register preview tiles. No custom agent service, UI, or adapter.
+- Existing software: Happier, Claude Code, Codex, CommandCode, tmux, Supervisor, Homepage, nginx, Pangolin, Traefik/Badger and the Tailscale Kubernetes operator. Scripts prepare configuration, register preview tiles and synchronize the email allowlist. Pangolin owns email OTP and browser authentication; no custom login service is implemented.
 - One workspace container contains all agents. A separate relay serves Happier's UI/API; Homepage lists live previews behind nginx. The operator adds its own control and proxy pods.
 - Browser access is the normal workflow: Happier chat or a ttyd terminal backed by tmux. Initial pairing can run in that browser terminal; `kubectl exec` remains an administrative fallback. No SSH server is installed in dobby.
 - Files under `manifests/` are templates. Apply only individually named rendered files in the order below.
@@ -11,7 +11,7 @@
 
 - `https://dobby.smelt-gray.ts.net`: Happier chat, sessions, files, approvals and Git review.
 - `https://dobby-terminal.smelt-gray.ts.net`: a real terminal inside the same workspace container. ttyd attaches to tmux, so sessions remain running after browser disconnection.
-- `https://dobby-previews.smelt-gray.ts.net`: one Homepage dashboard listing multiple live development servers. Selecting a tile opens `/live/PORT/` under this same origin; source changes hot-reload through Vite.
+- `https://dobby-previews.smelt-gray.ts.net`: private transport endpoint for the public `hq-previews` and `hq-preview-auth` hosts. The new image/config requires email OTP on the configured public preview origin. Selecting a tile opens `/live/PORT/`; see the [email setup](previews/README.md#email-access) before deploying.
 - Kubernetes Services provide the backends. Three Tailscale-class Ingresses provision private HTTPS endpoints. The operator is the controller, not a hostname you access with port numbers.
 - A new preview needs a dev server and a dashboard entry, not a new Ingress or URL hostname. Registration is agent-managed YAML configuration; there is no custom port-scanning service.
 - [Preview setup and agent workflow](previews/README.md).
@@ -243,7 +243,7 @@ git config --global init.defaultBranch main
 - ttyd, nginx and the Happier daemon run under Supervisor inside the same workspace container. A failed Happier login does not prevent terminal access. tmux preserves running terminal sessions between browser connections; container replacement still stops them.
 - The browser terminal runs native Firstmate/agent TUIs directly, independently of Happier SDK integration. The terminal is a full-control endpoint. Only the intended tailnet identity should have access. ttyd checks WebSocket origins, exposes no URL-argument execution and has no public listener outside the selected Tailscale Service. Multiple browser clients share the same `dobby` tmux session.
 - Start each project's own server on localhost at a free port in 3000..5999, in a named tmux window. Register it with `dobby-preview add "Project name" PORT`. No Kubernetes resource is created by registration. The project needs compatible `/live/PORT/` base-path settings; see the framework-independent portal guide.
-- Open `https://dobby-previews.smelt-gray.ts.net` and choose the desired preview. Refresh Homepage after adding tiles if needed; Vite handles subsequent source-edit hot reload.
+- After configuring email access, open `https://hq-previews.YOUR_DOMAIN`, complete the emailed code challenge and choose a preview. Refresh Homepage after adding tiles if needed; Vite handles subsequent source-edit hot reload.
 - [Exact setup, Vite example, registry format and recovery limits](previews/README.md). Homepage and nginx are existing services; the registration helper only updates dashboard YAML. No custom dashboard, scanner or launcher is required. Other frameworks need compatible path-prefix/asset/WebSocket settings.
 - Playwright/Chromium remains available inside dobby for visual checks. Its sandbox compatibility still needs a live test; don't enable privileged mode to bypass errors.
 
@@ -283,7 +283,7 @@ git config --global init.defaultBranch main
 
 ## Last updated
 
-- Date: 2026-11-14 23:12 UTC
-- Previous commit: [3df6ade](https://github.com/adi-QTPi/ministry/commit/3df6ade)
+- Date: 2026-11-15 17:58 UTC
+- Previous commit: [fa79787](https://github.com/adi-QTPi/ministry/commit/fa79787)
 
 _Date and commit hash are auto-generated. Commit hash is of the commit previous to the commit which modified this README._

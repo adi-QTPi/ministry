@@ -50,7 +50,8 @@ data:
         '' close;
       }
       server {
-        listen 8080;
+        # Only Traefik can reach the unauthenticated preview upstream.
+        listen 127.0.0.1:6080;
         server_name _;
         resolver ${DNS_SERVER} valid=10s ipv6=off;
         proxy_http_version 1.1;
@@ -73,6 +74,30 @@ data:
         location / {
           set $dashboard dobby-dashboard.dobby.svc.cluster.local;
           proxy_pass http://$dashboard:3000;
+        }
+      }
+      server {
+        listen 8080;
+        server_name _;
+        location = /healthz { access_log off; return 200 'ok'; }
+        location / {
+          # Missing/invalid config, an empty allowlist or failed sync locks access.
+          if (!-f /tmp/dobby-preview-auth-ready) { return 503; }
+          proxy_pass https://127.0.0.1:6081;
+          proxy_ssl_server_name on;
+          proxy_ssl_name $host;
+          # Traefik's generated certificate is used only over loopback.
+          proxy_ssl_verify off;
+          proxy_http_version 1.1;
+          proxy_set_header Host $host;
+          proxy_set_header X-Forwarded-Host $host;
+          proxy_set_header X-Forwarded-Proto https;
+          proxy_set_header X-Forwarded-For $remote_addr;
+          proxy_set_header Upgrade $http_upgrade;
+          proxy_set_header Connection $connection_upgrade;
+          proxy_read_timeout 3600s;
+          proxy_send_timeout 3600s;
+          proxy_buffering off;
         }
       }
     }

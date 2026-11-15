@@ -1,5 +1,10 @@
 # syntax=docker/dockerfile:1
-FROM node:24-bookworm-slim@sha256:dc26ae92c9fb15cf6b1d63e20f0944b2efe0f115b20e00be48fb23fceb061c54
+# Keep Pangolin's Node runtime and native modules together.
+FROM fosrl/pangolin:1.26.0@sha256:a8285fd7c4ba400ef011dd62d4116e69298b51df242cdc4f26ba9f2b5d57ff6c
+
+WORKDIR /
+RUN mv /app /opt/pangolin \
+    && ln -s /home/dobby/.config/dobby/pangolin/runtime /opt/pangolin/config
 
 ARG CLAUDE_VERSION=2.1.325
 ARG CODEX_VERSION=0.169.0
@@ -21,6 +26,9 @@ RUN apt-get update \
 
 COPY --chmod=755 install-tailscale.sh /usr/local/bin/install-tailscale
 RUN install-tailscale "${TARGETARCH}" && tailscale version
+
+COPY --chmod=755 install-traefik.sh /usr/local/bin/install-traefik
+RUN install-traefik "${TARGETARCH}" && traefik version
 
 # Install outside the persistent home, so mounting an empty home hides no tools.
 RUN npm install --global --prefix /opt/agents \
@@ -62,8 +70,9 @@ RUN install-herdr "${TARGETARCH}"
 
 RUN groupmod --new-name dobby --gid 10000 node \
     && usermod --login dobby --uid 10000 --gid 10000 --home /home/dobby node \
-    && mkdir -p /home/dobby /workspace /preview-config \
+    && mkdir -p /home/dobby /workspace /preview-config /opt/pangolin/.next/cache \
     && chown 10000:10000 /home/dobby /workspace /preview-config \
+    && chown -R 10000:10000 /opt/pangolin/.next \
     && printf 'dobby ALL=(ALL) NOPASSWD: ALL\n' > /etc/sudoers.d/dobby \
     && chmod 0440 /etc/sudoers.d/dobby \
     && visudo -cf /etc/sudoers.d/dobby \
@@ -72,6 +81,8 @@ RUN groupmod --new-name dobby --gid 10000 node \
 COPY --chmod=755 entrypoint.sh /usr/local/bin/dobby-entrypoint
 COPY --chmod=755 happier-start.sh /usr/local/bin/dobby-happier-start
 COPY --chmod=755 preview.py /usr/local/bin/dobby-preview
+COPY --chmod=755 pangolin.py /usr/local/bin/dobby-pangolin
+COPY --chmod=755 pangolinctl.sh /usr/local/bin/pangctl
 COPY --chmod=755 seed-firstmate.py /usr/local/bin/dobby-seed-firstmate
 COPY --chmod=755 firstmate.sh /usr/local/bin/dobby-firstmate
 COPY --chmod=755 tailscale-start.sh /usr/local/bin/dobby-tailscale-start
@@ -85,4 +96,5 @@ ENV HOME=/home/dobby \
     TERM=xterm-256color
 USER 10000:10000
 WORKDIR /workspace
+CMD []
 ENTRYPOINT ["/usr/bin/tini", "-g", "--", "/usr/local/bin/dobby-entrypoint"]

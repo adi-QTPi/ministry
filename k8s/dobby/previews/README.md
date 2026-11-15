@@ -1,7 +1,7 @@
 # Live preview portal
 
-- One entry point: `https://dobby-previews.smelt-gray.ts.net`.
-- Two parts: Homepage provides the tile dashboard; nginx proxies the selected preview to the project's localhost port. nginx runs inside dobby's workspace container, so it can reach `127.0.0.1` listeners directly.
+- Public entry point: `https://hq-previews.YOUR_DOMAIN`; email login: `https://hq-preview-auth.YOUR_DOMAIN`.
+- Pangolin and Traefik/Badger authenticate viewers before nginx can reach Homepage or a project's localhost port. All four processes run inside dobby's workspace image; Homepage remains a separate pod.
 - There is one preview Kubernetes Service and one Tailscale Ingress. No per-preview hostname, public IP, new Service, Ingress or cluster API credential is required.
 - The portal is framework-independent. Each project owns its dev server and command; the tile registry only needs its name and port. Vite is one possible server, not the platform.
 
@@ -15,6 +15,30 @@ sudo bash scripts/seed-preview-config.sh /srv/dobby rendered/homepage
 
 - This seeds only missing Homepage files in `/srv/dobby/preview-config`. The same directory is mounted at `/preview-config` inside dobby and `/app/config` inside Homepage.
 - The dashboard starts empty; no sample tile pretends to be a running project.
+
+## Email access
+
+- On first container startup, the entrypoint creates missing files under `/home/dobby/.config/dobby/pangolin/`. This is the persistent home volume, separate from the Homepage configuration mount. Existing files are preserved.
+- SSH into dobby and fill in the two files:
+
+```sh
+ssh dobby
+vi ~/.config/dobby/pangolin/settings.yaml
+vi ~/.config/dobby/pangolin/allowed-emails.txt
+dobby-pangolin check
+```
+
+- `settings.yaml`: set `preview_url` and `auth_url` to the two public HTTPS origins on your domain. Fill in SMTP host, username, password and sender address. Use implicit TLS (`secure: true`, port 465); SMTP certificates are verified. The Kubernetes policy permits public SMTP on 465. A different SMTP port requires an explicit policy change.
+- `allowed-emails.txt`: one exact email address per line. Blank lines and lines starting with `#` are ignored. No wildcard domains. The initial allowlist is empty and denies everyone.
+- Startup automatically provisions a private administrator, a Dobby organization, and the email-only preview resource through upstream Pangolin's CLI/API. Viewers need no Pangolin account and no Google/OAuth login. Generated administrator credentials and the signing secret live in `admin.json`, mode 0600. Keep that file and `runtime/db/` with the persistent home; never delete or hand-edit them to rotate credentials.
+- The gateway stays locked with HTTP 503 until settings are valid and at least one email is approved. The helper checks file changes every five seconds. Email edits apply automatically; settings edits restart the auth processes through Supervisor. Invalid edits or failed synchronization lock the gateway.
+- Browser flow: open previews, enter an approved email, receive Pangolin's single-use code, enter it, then browse using the authenticated browser cookie. The configured session duration defaults to 24 hours. All `/live/PORT/` paths, assets and WebSocket handshakes pass through the same gate.
+- An allowlist update may revoke existing sessions. Already open WebSockets can remain connected until they close; removal prevents fresh authenticated requests after the auth cache expires. For immediate disconnection, restart `preview-gateway` after removing access.
+- Preview tiles use relative `/live/PORT/` links, so they stay on the hostname used to open the dashboard. Re-registering a legacy absolute tile converts it without creating a duplicate. `preview_url` remains the configured public origin for the login gate.
+- Apply the updated public Caddy configuration: both `hq-previews` and `hq-preview-auth` proxy to the existing Tailscale preview endpoint while preserving the public Host header. No IITR IP restriction remains. Configure both public DNS records. The private `.ts.net` hostname is an upstream transport address; it does not bypass the public hostname authentication gate.
+- Deploy the new workspace image **and** the updated nginx ConfigMap together, restart the workspace, and apply the SMTP NetworkPolicy. Updating only the image leaves the previous unauthenticated nginx configuration in place. Publishing/building an image alone does not deploy these changes.
+- Only `/healthz` bypasses authentication; it returns a constant readiness response with no preview data. The unauthenticated nginx upstream listens on loopback port 6080, Traefik on loopback 6081. Pangolin's internal ports 6100..6104 are outside the 3000..5999 preview range and have no public Service. No Docker socket or tunneling service is required.
+- Traefik downloads its pinned Badger plugin over HTTPS on startup. If loading or authentication fails, previews remain inaccessible. The wrapper only seeds configuration and applies allowlists; OTPs, rate limiting, sessions and cookies belong to upstream Pangolin/Badger.
 
 ## Agent workflow
 
@@ -64,7 +88,7 @@ dobby-preview list
 
 ## Last updated
 
-- Date: 2026-11-14 23:12 UTC
-- Previous commit: [3df6ade](https://github.com/adi-QTPi/ministry/commit/3df6ade)
+- Date: 2026-11-15 17:58 UTC
+- Previous commit: [fa79787](https://github.com/adi-QTPi/ministry/commit/fa79787)
 
 _Date and commit hash are auto-generated. Commit hash is of the commit previous to the commit which modified this README._

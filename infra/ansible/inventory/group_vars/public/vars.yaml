@@ -46,6 +46,18 @@ caddy_proxy_services:
     port: 8088
     host: "{{ teddy }}"
 
+  - subdomain: hq-previews
+    host: "https://dobby-previews.smelt-gray.ts.net"
+    port: 443
+    extra_options:
+      header_up: "Host {host}"
+
+  - subdomain: hq-preview-auth
+    host: "https://dobby-previews.smelt-gray.ts.net"
+    port: 443
+    extra_options:
+      header_up: "Host {host}"
+
   - subdomain: "*.apps"
     port: 31150
     host: "{{ k8s_apps_ingress }}"
