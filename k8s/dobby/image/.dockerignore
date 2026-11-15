@@ -4,6 +4,9 @@
 !happier-start.sh
 !supervisord.conf
 !preview.py
+!pangolin.py
+!pangolinctl.sh
+!install-traefik.sh
 !install-firstmate-tools.sh
 !seed-firstmate.py
 !firstmate.sh
