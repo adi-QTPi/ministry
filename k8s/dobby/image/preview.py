@@ -16,7 +16,13 @@ def preview_url(base_url, port):
     parsed = urllib.parse.urlsplit(base_url)
     if parsed.scheme != "https" or not parsed.hostname or parsed.path not in ("", "/") or parsed.query or parsed.fragment or parsed.username or parsed.password:
         raise ValueError("Preview base URL must be an HTTPS origin.")
-    return f"{base_url.rstrip('/')}/live/{port}/"
+    return f"/live/{port}/"
+
+
+def same_preview(href, path):
+    # Older registries stored absolute URLs. Match their route during updates.
+    parsed = urllib.parse.urlsplit(href or "")
+    return parsed.path == path and not parsed.query and not parsed.fragment
 
 
 def live_group(document):
@@ -41,9 +47,9 @@ def update(document, action, url, name=None, port=None):
     if action == "add":
         if not name or len(name) > 120 or any(ord(c) < 32 for c in name):
             raise ValueError("Use a readable preview name of 1..120 characters.")
-        if any(name in item and item[name].get("href") != url for item in entries):
+        if any(name in item and not same_preview(item[name].get("href"), url) for item in entries):
             raise ValueError("That name already belongs to another port.")
-    entries[:] = [item for item in entries if next(iter(item.values())).get("href") != url]
+    entries[:] = [item for item in entries if not same_preview(next(iter(item.values())).get("href"), url)]
     if action == "add":
         entries.append({name: {"href": url, "description": f"localhost:{port}", "target": "_self"}})
     return document
