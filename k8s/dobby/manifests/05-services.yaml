@@ -15,20 +15,6 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: dobby-terminal
-  namespace: dobby
-spec:
-  type: ClusterIP
-  selector:
-    app: dobby-workspace
-  ports:
-  - name: http
-    port: 7681
-    targetPort: terminal
----
-apiVersion: v1
-kind: Service
-metadata:
   name: dobby-previews
   namespace: dobby
 spec:

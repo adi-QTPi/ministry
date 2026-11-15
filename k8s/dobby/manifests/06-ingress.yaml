@@ -1,26 +1,35 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
-metadata: {name: dobby, namespace: dobby}
+metadata:
+  name: dobby
+  namespace: dobby
+  annotations:
+    tailscale.com/proxy-class: dobby-bella
 spec:
   ingressClassName: tailscale
-  tls: [{hosts: [dobby]}]
+  tls:
+  - hosts:
+    - dobby
   defaultBackend:
-    service: {name: dobby-relay, port: {number: 3005}}
+    service:
+      name: dobby-relay
+      port:
+        number: 3005
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
-metadata: {name: dobby-terminal, namespace: dobby}
+metadata:
+  name: dobby-previews
+  namespace: dobby
+  annotations:
+    tailscale.com/proxy-class: dobby-bella
 spec:
   ingressClassName: tailscale
-  tls: [{hosts: [dobby-terminal]}]
+  tls:
+  - hosts:
+    - dobby-previews
   defaultBackend:
-    service: {name: dobby-terminal, port: {number: 7681}}
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata: {name: dobby-previews, namespace: dobby}
-spec:
-  ingressClassName: tailscale
-  tls: [{hosts: [dobby-previews]}]
-  defaultBackend:
-    service: {name: dobby-previews, port: {number: 8080}}
+    service:
+      name: dobby-previews
+      port:
+        number: 8080

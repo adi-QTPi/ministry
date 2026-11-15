@@ -8,7 +8,6 @@ data:
   HAPPIER_WEBAPP_URL: "https://dobby.${TAILNET_DNS}"
   DOBBY_PREVIEW_HOST: "dobby-previews.${TAILNET_DNS}"
   DOBBY_PREVIEW_URL: "https://dobby-previews.${TAILNET_DNS}"
-  DOBBY_TERMINAL_URL: "https://dobby-terminal.${TAILNET_DNS}"
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -43,6 +42,9 @@ data:
       access_log /dev/stdout;
       client_body_temp_path /tmp/dobby-nginx-body;
       proxy_temp_path /tmp/dobby-nginx-proxy;
+      fastcgi_temp_path /tmp/dobby-nginx-fastcgi;
+      uwsgi_temp_path /tmp/dobby-nginx-uwsgi;
+      scgi_temp_path /tmp/dobby-nginx-scgi;
       map $http_upgrade $connection_upgrade {
         default upgrade;
         '' close;
@@ -69,7 +71,7 @@ data:
         }
         location /live/ { return 404; }
         location / {
-          set $dashboard dobby-dashboard.dobby.svc;
+          set $dashboard dobby-dashboard.dobby.svc.cluster.local;
           proxy_pass http://$dashboard:3000;
         }
       }

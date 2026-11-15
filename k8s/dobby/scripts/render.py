@@ -97,7 +97,8 @@ def main():
     for source in sorted((ROOT / "manifests").glob("*.yaml")):
         documents = [replace(d, settings, excluded) for d in yaml.safe_load_all(source.read_text())]
         (args.output / source.name).write_text(yaml.safe_dump_all(documents, sort_keys=False))
-    shutil.copyfile(ROOT / "tailscale/values.yaml", args.output / "tailscale-values.yaml")
+    operator_values = replace(yaml.safe_load((ROOT / "tailscale/values.yaml").read_text()), settings, excluded)
+    (args.output / "tailscale-values.yaml").write_text(yaml.safe_dump(operator_values, sort_keys=False))
     policy = (ROOT / "tailscale/policy.hujson").read_text()
     # JSON encoding avoids injecting policy syntax through an identity string.
     policy = policy.replace('"${TAILNET_USER}"', json.dumps(settings["TAILNET_USER"]))

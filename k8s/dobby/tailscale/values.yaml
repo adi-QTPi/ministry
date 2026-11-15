@@ -1,6 +1,15 @@
 # OAuth credentials are supplied through a precreated operator-oauth Secret.
 oauth: {clientId: "", clientSecret: ""}
 operatorConfig:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - ${NODE_NAME}
   hostname: dobby-operator
   defaultTags: ["tag:dobby-operator"]
   resources:

@@ -35,8 +35,6 @@ spec:
         - configMapRef:
             name: dobby-workspace
         ports:
-        - name: terminal
-          containerPort: 7681
         - name: previews
           containerPort: 8080
         securityContext:
@@ -63,6 +61,12 @@ spec:
             cpu: '1'
             memory: 4Gi
             ephemeral-storage: 2Gi
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: previews
+          periodSeconds: 10
+          timeoutSeconds: 5
         volumeMounts:
         - name: home
           mountPath: /home/dobby
@@ -97,6 +101,15 @@ spec:
       - name: gateway-config
         configMap:
           name: dobby-nginx
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - ${NODE_NAME}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -175,6 +188,15 @@ spec:
       - name: tmp
         emptyDir:
           sizeLimit: 512Mi
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - ${NODE_NAME}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -245,12 +267,18 @@ spec:
           httpGet:
             path: /api/healthcheck
             port: http
+            httpHeaders:
+            - name: Host
+              value: dobby-previews.${TAILNET_DNS}
           failureThreshold: 60
           periodSeconds: 5
         readinessProbe:
           httpGet:
             path: /api/healthcheck
             port: http
+            httpHeaders:
+            - name: Host
+              value: dobby-previews.${TAILNET_DNS}
         volumeMounts:
         - name: config
           mountPath: /app/config
@@ -268,3 +296,12 @@ spec:
       - name: tmp
         emptyDir:
           sizeLimit: 128Mi
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - ${NODE_NAME}
