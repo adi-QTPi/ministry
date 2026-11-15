@@ -10,3 +10,4 @@
 !install-ttyd.sh
 !install-tailscale.sh
 !tailscale-start.sh
+!install-herdr.sh

@@ -60,6 +60,9 @@ RUN install-firstmate-tools "${TARGETARCH}" \
     && gh-axi --version && chrome-devtools-axi --version \
     && tasks-axi --version && quota-axi --version
 
+COPY --chmod=755 install-herdr.sh /usr/local/bin/install-herdr
+RUN install-herdr "${TARGETARCH}"
+
 RUN groupmod --new-name dobby --gid 10000 node \
     && usermod --login dobby --uid 10000 --gid 10000 --home /home/dobby node \
     && mkdir -p /home/dobby /workspace /preview-config \
@@ -78,6 +81,7 @@ COPY --chmod=755 tailscale-start.sh /usr/local/bin/dobby-tailscale-start
 COPY supervisord.conf /etc/dobby-supervisord.conf
 
 ENV HOME=/home/dobby \
+    SHELL=/bin/bash \
     HAPPIER_HOME_DIR=/home/dobby/.happier \
     NPM_CONFIG_PREFIX=/home/dobby/.local \
     TERM=xterm-256color
