@@ -22,6 +22,9 @@ RUN apt-get update \
 COPY --chmod=755 install-ttyd.sh /usr/local/bin/install-ttyd
 RUN install-ttyd "${TARGETARCH}" && ttyd --version
 
+COPY --chmod=755 install-tailscale.sh /usr/local/bin/install-tailscale
+RUN install-tailscale "${TARGETARCH}" && tailscale version
+
 # Install outside the persistent home, so mounting an empty home hides no tools.
 RUN npm install --global --prefix /opt/agents \
        "@anthropic-ai/claude-code@${CLAUDE_VERSION}" \
@@ -71,6 +74,7 @@ COPY --chmod=755 happier-start.sh /usr/local/bin/dobby-happier-start
 COPY --chmod=755 preview.py /usr/local/bin/dobby-preview
 COPY --chmod=755 seed-firstmate.py /usr/local/bin/dobby-seed-firstmate
 COPY --chmod=755 firstmate.sh /usr/local/bin/dobby-firstmate
+COPY --chmod=755 tailscale-start.sh /usr/local/bin/dobby-tailscale-start
 COPY supervisord.conf /etc/dobby-supervisord.conf
 
 ENV HOME=/home/dobby \

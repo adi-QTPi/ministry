@@ -108,6 +108,8 @@ jobs:
             chrome-devtools-axi --version
             tasks-axi --version
             quota-axi --version
+            tailscale version
+            tailscaled --version
             ttyd --version
             sudo -n id -u | grep -qx 0
             bash -lc "command -v claude && command -v codex && command -v cmd && command -v happier && codex --version && happier --version"
