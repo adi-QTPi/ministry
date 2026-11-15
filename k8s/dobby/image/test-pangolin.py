@@ -4,6 +4,7 @@ import importlib.machinery
 import importlib.util
 import json
 import pathlib
+import sqlite3
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -48,6 +49,15 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(pangolin.emails(self.root), [])
         with self.assertRaises(ValueError):
             pangolin.settings(self.root)
+
+    def test_bootstrap_uses_upstream_user_table_and_preserves_users(self):
+        database = pathlib.Path(self.temporary.name) / "db.sqlite"
+        with sqlite3.connect(database) as db:
+            db.execute('CREATE TABLE "user" (userId TEXT PRIMARY KEY)')
+            self.assertTrue(pangolin.fresh_database(database))
+            db.execute('INSERT INTO "user" VALUES (?)', ("existing-admin",))
+            db.commit()
+        self.assertFalse(pangolin.fresh_database(database))
 
     def test_empty_allowlist_disables_resource(self):
         data = configured(self.root)
