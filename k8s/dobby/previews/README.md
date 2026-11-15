@@ -3,7 +3,7 @@
 - Public entry point: `https://hq-previews.YOUR_DOMAIN`; email login: `https://hq-preview-auth.YOUR_DOMAIN`.
 - Pangolin and Traefik/Badger authenticate viewers before nginx can reach Homepage or a project's localhost port. All four processes run inside dobby's workspace image; Homepage remains a separate pod.
 - There is one preview Kubernetes Service and one Tailscale Ingress. No per-preview hostname, public IP, new Service, Ingress or cluster API credential is required.
-- The portal is framework-independent. Each project owns its dev server and command; the tile registry only needs its name and port. Vite is one possible server, not the platform.
+- The portal is framework-independent. Each project supplies its dev server command and working directory; registration creates a Supervisor service and a dashboard tile. Vite is one possible server, not the platform.
 
 ## First installation
 
@@ -42,25 +42,31 @@ dobby-pangolin check
 
 ## Agent workflow
 
-1. Start the project's own preview server on an unused localhost port in **3000..5999**, in a named tmux window. Use its normal framework-specific launch command.
-2. Inform the portal of the name and port:
+1. Install the project dependencies and choose a free localhost port in **3000..5999**. Stop any manually launched server on that port before handing it to Supervisor.
+2. Register the project with its foreground start command and working directory:
 
 ```sh
-dobby-preview add "Shop redesign" 5173
-dobby-preview add "Admin wireframe" 5174
+dobby-preview add "Shop redesign" 5173 --directory /workspace/shop \
+  --command 'npm run dev -- --host 127.0.0.1 --port 5173'
+dobby-preview add "Admin wireframe" 5174 --directory /workspace/admin \
+  --command 'npm run dev -- --host 127.0.0.1 --port 5174'
 ```
 
 3. Open the dashboard and choose a tile. Routes are `/live/5173/` and `/live/5174/`; nginx forwards requests and WebSocket upgrades to the corresponding `127.0.0.1` server inside dobby.
 4. The project's own watcher/hot-reload mechanism handles edits. The portal doesn't rebuild projects or copy files. Refresh Homepage after adding tiles if its dashboard data is cached.
-5. Remove a tile when finished:
+5. Remove the preview when finished. This stops its managed process group and deletes its saved service and tile:
 
 ```sh
 dobby-preview remove 5173
 dobby-preview list
 ```
 
-- Registration updates only Homepage YAML. It does not create Kubernetes resources, start/stop processes or install dependencies. Re-registering a port updates its tile rather than duplicating it.
-- Agents can also edit `/preview-config/services.yaml` directly. `services.example.yaml` shows the format. The small `dobby-preview` helper is configuration glue, not a custom web service.
+- Registration starts a `preview-PORT` Supervisor program before publishing its tile. Each process gets `PORT` and `DOBBY_PREVIEW_PORT`. The command must stay in the foreground, bind localhost and use the matching port and `/live/PORT/` prefix. Registration does not install dependencies or create Kubernetes resources.
+- `--directory` defaults to the current directory. `--command` is required and parsed as argument words without shell expansion. Use an explicit `bash -lc '...'` command if shell syntax is needed. Keep credentials out of command arguments.
+- Re-registering an unchanged command updates the tile without restarting a healthy process. Changing the command or directory restarts only that preview. Failed startup restores the previous service and tile. A running process is not a guarantee of HTTP readiness; check the actual preview.
+- Control a service with `supervisorctl -c /etc/dobby-supervisord.conf status preview-5173` or `restart preview-5173`. Logs are in `~/.config/dobby/previews/preview-5173.log`, rotated at 1 MiB with three backups.
+- Existing tile-only previews are not automatically adopted. Re-register them with their start command to enable management.
+- Editing `/preview-config/services.yaml` directly changes tiles only; it does not create or modify managed services. Use `dobby-preview add/remove` to keep tiles and services together. `services.example.yaml` shows the tile format.
 
 ## Path-prefix compatibility
 
@@ -73,9 +79,9 @@ dobby-preview list
 ## Sessions and recovery
 
 - Open the browser terminal once to create the `dobby` tmux session. A caller operating earlier can create it with `tmux new-session -d -s dobby -c /workspace`.
-- Example launch pattern, substituting the project's real command: `tmux new-window -t dobby -n shop-preview 'cd /workspace/shop && npm run dev'`.
-- Browser/laptop disconnection does not end tmux work. Container replacement stops running servers; code, credentials and tile configuration remain in host folders.
-- No custom auto-discovery, launcher or automatic process-restore daemon is installed. Restart required project servers after container replacement. Tiles can remain stale until removed; unavailable upstreams return a gateway error.
+- Use tmux for agent sessions and interactive work. Use `dobby-preview add` for preview servers; do not launch the same server in tmux as well.
+- Browser/laptop disconnection does not end tmux work or managed previews. Container replacement stops processes; Supervisor starts saved preview services again when the workspace starts. The project directory and dependencies must still exist.
+- Service definitions, start commands and rotating logs persist under `~/.config/dobby/previews/`, separate from Homepage's configuration mount. Supervisor restarts crashed servers and restores saved services on startup. Servers that repeatedly fail startup enter FATAL; inspect their logs and fix/re-register them. Unavailable upstreams return a gateway error.
 - Multiple previews share the preview browser origin. They are not browser security boundaries. The terminal and Happier stay on separate origins.
 - Only ports 3000..5999 are proxied. The terminal on 7681, gateway on 8080, and unrelated administrative ports are excluded.
 - Homepage has no mounted source code, agent credentials, runtime socket or Kubernetes API credentials. Its only persistent mount is its own dashboard configuration. nginx shares the workspace's isolation boundary because localhost connectivity requires it to run there.
@@ -83,12 +89,13 @@ dobby-preview list
 
 ## Sources
 
+- [Supervisor program configuration](https://supervisord.org/configuration.html#program-x-section-settings)
 - [Homepage services](https://gethomepage.dev/configs/services/) and [dashboard refresh](https://gethomepage.dev/configs/settings/)
 - [Vite base URL](https://vite.dev/config/shared-options#base) and [server settings](https://vite.dev/config/server-options)
 
 ## Last updated
 
-- Date: 2026-11-15 17:58 UTC
-- Previous commit: [fa79787](https://github.com/adi-QTPi/ministry/commit/fa79787)
+- Date: 2026-11-15 21:11 UTC
+- Previous commit: [7da0766](https://github.com/adi-QTPi/ministry/commit/7da0766)
 
 _Date and commit hash are auto-generated. Commit hash is of the commit previous to the commit which modified this README._

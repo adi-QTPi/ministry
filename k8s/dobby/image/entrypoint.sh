@@ -2,6 +2,7 @@
 set -euo pipefail
 umask 077
 mkdir -p "$HOME/.happier" "$HOME/.config" "$HOME/.cache" "$HOME/.local/bin"
+mkdir -p "$HOME/.config/dobby/previews"
 dobby-seed-firstmate /opt/firstmate /workspace/firstmate
 dobby-pangolin seed
 
