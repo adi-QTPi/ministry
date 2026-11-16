@@ -20,6 +20,15 @@ http://localhost:5555 {
 {{ base_domain }} {
 {% endif %}
 
+    {% if service.allowed_cidrs is defined %}
+    {% if service.allowed_cidrs | length > 0 %}
+    @blocked not remote_ip {{ service.allowed_cidrs | join(' ') }}
+    respond @blocked "Forbidden" 403
+    {% else %}
+    respond "Forbidden" 403
+    {% endif %}
+    {% endif %}
+
     {% if service.directives is defined and service.directives %}
     {% for directive in service.directives %}
     {{ directive }}
