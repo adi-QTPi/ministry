@@ -49,12 +49,16 @@ caddy_proxy_services:
   - subdomain: hq-previews
     host: "https://dobby-previews.smelt-gray.ts.net"
     port: 443
+    allowed_cidrs:
+      - "103.37.200.0/23"
     extra_options:
       header_up: "Host {host}"
 
   - subdomain: hq-preview-auth
     host: "https://dobby-previews.smelt-gray.ts.net"
     port: 443
+    allowed_cidrs:
+      - "103.37.200.0/23"
     extra_options:
       header_up: "Host {host}"
 

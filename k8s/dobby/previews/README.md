@@ -35,7 +35,7 @@ dobby-pangolin check
 - Browser flow: open previews, enter an approved email, receive Pangolin's single-use code, enter it, then browse using the authenticated browser cookie. The configured session duration defaults to 24 hours. All `/live/PORT/` paths, assets and WebSocket handshakes pass through the same gate.
 - An allowlist update may revoke existing sessions. Already open WebSockets can remain connected until they close; removal prevents fresh authenticated requests after the auth cache expires. For immediate disconnection, restart `preview-gateway` after removing access.
 - Preview tiles use relative `/live/PORT/` links, so they stay on the hostname used to open the dashboard. Re-registering a legacy absolute tile converts it without creating a duplicate. `preview_url` remains the configured public origin for the login gate.
-- Apply the updated public Caddy configuration: both `hq-previews` and `hq-preview-auth` proxy to the existing Tailscale preview endpoint while preserving the public Host header. No IITR IP restriction remains. Configure both public DNS records. The private `.ts.net` hostname is an upstream transport address; it does not bypass the public hostname authentication gate.
+- Apply the updated public Caddy configuration: both `hq-previews` and `hq-preview-auth` proxy to the existing Tailscale preview endpoint while preserving the public Host header. Both `hq-previews` and `hq-preview-auth` permit only IITR Wi-Fi public egress `103.37.200.0/23`; other source addresses receive HTTP 403 before authentication or proxying. Email login must be completed from that range, and an existing login does not permit off-campus access. Internal authentication checks use loopback and email delivery uses outbound SMTP, so neither requires public inbound access. Clients must connect directly to Caddy; an upstream HTTP proxy requires explicit trusted-proxy configuration and client-IP matching. Configure both public DNS records. The private `.ts.net` hostname is an upstream transport address; it does not bypass the public hostname authentication gate.
 - Deploy the new workspace image **and** the updated nginx ConfigMap together, restart the workspace, and apply the SMTP NetworkPolicy. Updating only the image leaves the previous unauthenticated nginx configuration in place. Publishing/building an image alone does not deploy these changes.
 - Only `/healthz` bypasses authentication; it returns a constant readiness response with no preview data. The unauthenticated nginx upstream listens on loopback port 6080, Traefik on loopback 6081. Pangolin's internal ports 6100..6104 are outside the 3000..5999 preview range and have no public Service. No Docker socket or tunneling service is required.
 - Traefik downloads its pinned Badger plugin over HTTPS on startup. If loading or authentication fails, previews remain inaccessible. The wrapper only seeds configuration and applies allowlists; OTPs, rate limiting, sessions and cookies belong to upstream Pangolin/Badger.
@@ -88,7 +88,7 @@ dobby-preview list
 
 ## Last updated
 
-- Date: 2026-11-15 17:58 UTC
-- Previous commit: [fa79787](https://github.com/adi-QTPi/ministry/commit/fa79787)
+- Date: 2026-11-16 18:36 UTC
+- Previous commit: [d7d8367](https://github.com/adi-QTPi/ministry/commit/d7d8367)
 
 _Date and commit hash are auto-generated. Commit hash is of the commit previous to the commit which modified this README._
